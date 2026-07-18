@@ -37,6 +37,8 @@ export default function LoginPage() {
 
       setMessage({ text: data.message || 'Success!', type: 'success' });
       
+      localStorage.setItem('userEmail', email);
+      
       setTimeout(() => {
         window.location.href = '/';
       }, 1000);

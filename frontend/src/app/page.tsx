@@ -29,6 +29,14 @@ export default function Home() {
   const [isLightMode, setIsLightMode] = useState(false);
   const [analysisData, setAnalysisData] = useState<any>(null);
   const [activeDatasetIndex, setActiveDatasetIndex] = useState(0);
+  const [userEmail, setUserEmail] = useState<string>('user@example.com');
+
+  useEffect(() => {
+    const email = localStorage.getItem('userEmail');
+    if (email) {
+      setUserEmail(email);
+    }
+  }, []);
 
   useEffect(() => {
     if (isLightMode) {
@@ -393,7 +401,7 @@ export default function Home() {
                     </div>
                     <div>
                       <label className="text-xs uppercase tracking-widest text-muted-foreground font-bold mb-2 block">Email Address</label>
-                      <input type="email" defaultValue="user@example.com" className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-primary/50 transition-colors" />
+                      <input type="email" value={userEmail} readOnly className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white/70 text-sm focus:outline-none focus:border-primary/50 transition-colors cursor-not-allowed" />
                     </div>
                   </div>
                 </div>
