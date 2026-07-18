@@ -5,6 +5,9 @@ import { Upload, BarChart3, Lightbulb, MessageSquare, FileText, ArrowRight, Chec
 import clsx from 'clsx';
 import { useDropzone } from 'react-dropzone';
 import InsightsCenter from '@/components/InsightsCenter';
+import AgentWorkflowBar from '@/components/AgentWorkflowBar';
+import AgentDetailsModal from '@/components/AgentDetailsModal';
+import { useAgentStore } from '@/store/agentStore';
 
 type Step = 'dashboard' | 'chat' | 'data-quality' | 'forecasting' | 'upload' | 'analyze' | 'reports' | 'settings' | 'data-insights';
 
@@ -25,6 +28,7 @@ export default function Home() {
   const [isUploading, setIsUploading] = useState(false);
   const [isLightMode, setIsLightMode] = useState(false);
   const [analysisData, setAnalysisData] = useState<any>(null);
+  const [activeDatasetIndex, setActiveDatasetIndex] = useState(0);
 
   useEffect(() => {
     if (isLightMode) {
@@ -70,11 +74,19 @@ export default function Home() {
     setChatInput('');
     setIsTyping(true);
 
+    const simulateWorkflow = useAgentStore.getState().simulateWorkflow;
+
     try {
+      // Run agent visualization
+      await simulateWorkflow(userMsg);
+      
       const res = await fetch('http://localhost:8000/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: userMsg })
+        body: JSON.stringify({ 
+          message: userMsg,
+          context_columns: analysisData?.datasets?.[activeDatasetIndex]?.columns || []
+        })
       });
       const data = await res.json();
       setChatMessages(prev => [...prev, { role: 'ai', text: data.answer, code: data.code }]);
@@ -90,7 +102,9 @@ export default function Home() {
     setIsUploading(true);
     
     const formData = new FormData();
-    formData.append('file', files[0]);
+    files.forEach(file => {
+      formData.append('files', file);
+    });
 
     setCurrentStep('analyze');
     
@@ -129,6 +143,7 @@ export default function Home() {
     function checkCompletion() {
       if (wsCompleted && fetchCompleted) {
         setAnalysisData(fetchedData);
+        setActiveDatasetIndex(fetchedData?.datasets?.length ? fetchedData.datasets.length - 1 : 0);
         setCurrentStep('dashboard');
       }
     }
@@ -164,6 +179,9 @@ export default function Home() {
           </div>
         </div>
       </header>
+
+      {/* Multi-Agent Visualizer */}
+      <AgentWorkflowBar />
 
       {/* Main Layout Grid */}
       <div className="flex-1 flex overflow-hidden">
@@ -318,8 +336,28 @@ export default function Home() {
             </div>
           )}
 
-          {(currentStep === 'dashboard' || currentStep === 'data-quality' || currentStep === 'forecasting' || currentStep === 'data-insights') && (
-            <InsightsCenter data={analysisData} view={currentStep} onNext={() => setCurrentStep('chat')} />
+          {(currentStep === 'dashboard' || currentStep === 'data-quality' || currentStep === 'forecasting' || currentStep === 'data-insights') && analysisData?.datasets && (
+            <div className="flex-1 flex flex-col overflow-hidden">
+              <div className="w-full bg-black/40 border-b border-white/5 p-4 flex gap-2 overflow-x-auto">
+                {analysisData.datasets.map((ds: any, idx: number) => (
+                  <button
+                    key={idx}
+                    onClick={() => setActiveDatasetIndex(idx)}
+                    className={clsx(
+                      "px-6 py-2 rounded-lg font-medium text-sm transition-all duration-300 whitespace-nowrap",
+                      activeDatasetIndex === idx 
+                        ? "bg-primary/20 text-primary border border-primary/50 shadow-[0_0_15px_rgba(139,92,246,0.3)]" 
+                        : "bg-white/5 text-muted-foreground hover:bg-white/10 hover:text-white border border-transparent"
+                    )}
+                  >
+                    {ds.filename}
+                  </button>
+                ))}
+              </div>
+              <div className="flex-1 overflow-y-auto">
+                <InsightsCenter data={analysisData.datasets[activeDatasetIndex]} view={currentStep} onNext={() => setCurrentStep('chat')} />
+              </div>
+            </div>
           )}
 
           {currentStep === 'settings' && (
@@ -576,6 +614,8 @@ export default function Home() {
           </div>
         </main>
       </div>
+      
+      <AgentDetailsModal />
     </div>
   );
 }

@@ -1,4 +1,5 @@
 import asyncio
+from typing import List
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 import pandas as pd
@@ -84,17 +85,7 @@ async def websocket_endpoint(websocket: WebSocket):
     except WebSocketDisconnect:
         print("Client disconnected")
 
-@app.post("/api/analyze/upload")
-async def analyze_csv(file: UploadFile = File(...)):
-    if not file.filename.endswith('.csv'):
-        raise HTTPException(status_code=400, detail="Only CSV files are supported")
-        
-    contents = await file.read()
-    try:
-        df = pd.read_csv(io.StringIO(contents.decode('utf-8')))
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Error reading CSV: {str(e)}")
-        
+def generate_analysis_for_df(df, filename, chart_types):
     total_rows = len(df)
     columns = list(df.columns)
     
@@ -261,30 +252,95 @@ async def analyze_csv(file: UploadFile = File(...)):
         "userSegments": user_segments,
         "revenueData": revenue_data,
         "dynamicText": dynamic_text,
-        "filename": file.filename
+        "filename": filename,
+        "columns": columns,
+        "chartTypes": chart_types
+    }
+
+@app.post("/api/analyze/upload")
+async def analyze_csv(files: List[UploadFile] = File(...)):
+    dfs = []
+    filenames = []
+    for file in files:
+        if not file.filename.endswith('.csv'):
+            raise HTTPException(status_code=400, detail="Only CSV files are supported")
+            
+        contents = await file.read()
+        try:
+            df = pd.read_csv(io.StringIO(contents.decode('utf-8')))
+            dfs.append(df)
+            filenames.append(file.filename)
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=f"Error reading CSV {file.filename}: {str(e)}")
+            
+    if not dfs:
+        raise HTTPException(status_code=400, detail="No valid data uploaded")
+        
+    chart_combos = [
+        ["Area", "Bar", "Pie"],
+        ["Line", "Scatter", "Pie"],
+        ["Bar", "Line", "Scatter"],
+        ["Scatter", "Area", "Bar"]
+    ]
+        
+    datasets_responses = []
+    # Process individual datasets
+    for i, df in enumerate(dfs):
+        combo = chart_combos[i % len(chart_combos)]
+        analysis = generate_analysis_for_df(df, filenames[i], combo)
+        datasets_responses.append(analysis)
+        
+    # Process combined dataset if there is more than 1 file
+    if len(dfs) > 1:
+        combined_df = pd.concat(dfs, ignore_index=True)
+        combo = chart_combos[(len(dfs)) % len(chart_combos)]
+        analysis = generate_analysis_for_df(combined_df, "Combined CSV", combo)
+        datasets_responses.append(analysis)
+        
+    return {
+        "datasets": datasets_responses
     }
 
 from pydantic import BaseModel
 
 class ChatRequest(BaseModel):
     message: str
+    context_columns: List[str] = []
 
 @app.post("/api/chat")
 async def chat_endpoint(request: ChatRequest):
     user_msg = request.message.lower()
+    
+    # Check for relevance if context_columns are provided
+    if request.context_columns:
+        words = set(user_msg.split())
+        col_words = set([w.lower() for col in request.context_columns for w in col.split('_')])
+        general_terms = {"average", "mean", "region", "country", "top", "order", "trend", "growth", "revenue", "sales", "data", "report"}
+        if not (words.intersection(col_words) or words.intersection(general_terms)):
+            return {
+                "answer": "This question is not related to the uploaded CSV files.",
+                "code": ""
+            }
+            
     if "average" in user_msg or "mean" in user_msg:
         answer = "The average order value across all regions is **$142.50**. This represents a 5% increase from the previous month."
+        code = "SELECT AVG(order_value) as avg_order_value FROM orders;"
     elif "region" in user_msg or "country" in user_msg:
         answer = "The top performing region is **North America**, contributing to 55% of the total revenue."
+        code = "SELECT region, SUM(revenue) as total_revenue FROM orders GROUP BY region ORDER BY total_revenue DESC LIMIT 1;"
     elif "top" in user_msg and "order" in user_msg:
         answer = "The top 5 highest-value orders are led by an order of **$45,200** from the Enterprise segment, followed closely by orders averaging **$38,000** in the Cloud Hosting category."
+        code = "SELECT order_id, segment, order_value FROM orders ORDER BY order_value DESC LIMIT 5;"
     elif "trend" in user_msg or "growth" in user_msg:
         answer = "Overall growth is trending positively at **14.2% quarter-over-quarter**, largely driven by new SMB subscriptions."
+        code = "SELECT quarter, SUM(revenue) as qtr_revenue, (SUM(revenue) - LAG(SUM(revenue)) OVER (ORDER BY quarter)) / LAG(SUM(revenue)) OVER (ORDER BY quarter) * 100 as growth_pct FROM orders GROUP BY quarter;"
     else:
         answer = f"Based on our analysis of your dataset, the insights regarding '{request.message}' indicate a stable and positive performance metric. Let me know if you'd like to drill down into a specific category."
+        code = f"SELECT * FROM dataset WHERE description LIKE '%{request.message}%' LIMIT 10;"
         
     return {
-        "answer": answer
+        "answer": answer,
+        "code": code
     }
 
 from fastapi.responses import FileResponse

@@ -8,7 +8,8 @@ import {
 import clsx from 'clsx';
 import { 
   LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, 
-  Tooltip, ResponsiveContainer, AreaChart, Area, PieChart, Pie, Cell, Legend, ComposedChart
+  Tooltip, ResponsiveContainer, AreaChart, Area, PieChart, Pie, Cell, Legend, ComposedChart,
+  ScatterChart, Scatter, ZAxis
 } from 'recharts';
 
 // --- Fallback Mock Data for Charts ---
@@ -166,44 +167,92 @@ export default function InsightsCenter({ data, view = 'dashboard', onNext }: { d
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
             <ChartCard title={dynamicText.chartInsights.titleTrend} observation={dynamicText.chartInsights.obsTrend} interpretation={dynamicText.chartInsights.intTrend} hasData={revenueData && revenueData.length > 0}>
               <ResponsiveContainer width="100%" height="100%">
-                <ComposedChart data={revenueData}>
-                  <defs>
-                    <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.5}/>
-                      <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0}/>
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" vertical={false} />
-                  <XAxis dataKey="month" stroke="#ffffff50" fontSize={12} tickLine={false} axisLine={false} />
-                  <YAxis stroke="#ffffff50" fontSize={12} tickLine={false} axisLine={false} />
-                  <Tooltip 
-                    contentStyle={{ backgroundColor: 'rgba(0,0,0,0.9)', border: '1px solid rgba(139,92,246,0.3)', borderRadius: '12px', boxShadow: '0 4px 20px rgba(0,0,0,0.4)' }}
-                    itemStyle={{ color: '#fff' }}
-                  />
-                  <Area type="monotone" dataKey="revenue" stroke="none" fillOpacity={1} fill="url(#colorRev)" />
-                  <Line type="monotone" dataKey="revenue" stroke="#8b5cf6" strokeWidth={3} dot={{ fill: '#8b5cf6', strokeWidth: 2, r: 4 }} activeDot={{ r: 6, strokeWidth: 0, fill: '#fff' }} />
-                </ComposedChart>
+                {data?.chartTypes?.[0] === 'Area' ? (
+                  <ComposedChart data={revenueData}>
+                    <defs>
+                      <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.5}/>
+                        <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" vertical={false} />
+                    <XAxis dataKey="month" stroke="#ffffff50" fontSize={12} tickLine={false} axisLine={false} />
+                    <YAxis stroke="#ffffff50" fontSize={12} tickLine={false} axisLine={false} />
+                    <Tooltip contentStyle={{ backgroundColor: 'rgba(0,0,0,0.9)', border: '1px solid rgba(139,92,246,0.3)', borderRadius: '12px' }} itemStyle={{ color: '#fff' }} />
+                    <Area type="monotone" dataKey="revenue" stroke="none" fillOpacity={1} fill="url(#colorRev)" />
+                    <Line type="monotone" dataKey="revenue" stroke="#8b5cf6" strokeWidth={3} dot={{ fill: '#8b5cf6', strokeWidth: 2, r: 4 }} activeDot={{ r: 6, strokeWidth: 0, fill: '#fff' }} />
+                  </ComposedChart>
+                ) : data?.chartTypes?.[0] === 'Line' ? (
+                  <LineChart data={revenueData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" vertical={false} />
+                    <XAxis dataKey="month" stroke="#ffffff50" fontSize={12} tickLine={false} axisLine={false} />
+                    <YAxis stroke="#ffffff50" fontSize={12} tickLine={false} axisLine={false} />
+                    <Tooltip contentStyle={{ backgroundColor: 'rgba(0,0,0,0.9)', border: '1px solid rgba(139,92,246,0.3)', borderRadius: '12px' }} itemStyle={{ color: '#fff' }} />
+                    <Line type="monotone" dataKey="revenue" stroke="#3b82f6" strokeWidth={3} dot={{ fill: '#3b82f6', strokeWidth: 2, r: 4 }} />
+                  </LineChart>
+                ) : data?.chartTypes?.[0] === 'Bar' ? (
+                  <BarChart data={revenueData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" vertical={false} />
+                    <XAxis dataKey="month" stroke="#ffffff50" fontSize={12} tickLine={false} axisLine={false} />
+                    <YAxis stroke="#ffffff50" fontSize={12} tickLine={false} axisLine={false} />
+                    <Tooltip contentStyle={{ backgroundColor: 'rgba(0,0,0,0.9)', border: '1px solid rgba(139,92,246,0.3)', borderRadius: '12px' }} itemStyle={{ color: '#fff' }} />
+                    <Bar dataKey="revenue" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                ) : (
+                  <ScatterChart data={revenueData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" vertical={false} />
+                    <XAxis dataKey="month" stroke="#ffffff50" fontSize={12} tickLine={false} axisLine={false} />
+                    <YAxis dataKey="revenue" stroke="#ffffff50" fontSize={12} tickLine={false} axisLine={false} />
+                    <ZAxis range={[100, 100]} />
+                    <Tooltip contentStyle={{ backgroundColor: 'rgba(0,0,0,0.9)', border: '1px solid rgba(139,92,246,0.3)', borderRadius: '12px' }} itemStyle={{ color: '#fff' }} cursor={{ strokeDasharray: '3 3' }} />
+                    <Scatter name="Revenue" dataKey="revenue" fill="#10b981" />
+                  </ScatterChart>
+                )}
               </ResponsiveContainer>
             </ChartCard>
 
             <ChartCard title={dynamicText.chartInsights.titleCategory} observation={dynamicText.chartInsights.obsCategory} interpretation={dynamicText.chartInsights.intCategory} hasData={categoryData && categoryData.length > 0}>
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={categoryData} margin={{ top: 20 }}>
-                  <defs>
-                    <linearGradient id="colorBar" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#60a5fa" stopOpacity={1}/>
-                      <stop offset="100%" stopColor="#3b82f6" stopOpacity={0.6}/>
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" vertical={false} />
-                  <XAxis dataKey="category" stroke="#ffffff50" fontSize={12} tickLine={false} axisLine={false} />
-                  <YAxis stroke="#ffffff50" fontSize={12} tickLine={false} axisLine={false} />
-                  <Tooltip 
-                    contentStyle={{ backgroundColor: 'rgba(0,0,0,0.9)', border: '1px solid rgba(59,130,246,0.3)', borderRadius: '12px', color: '#fff' }}
-                    cursor={{ fill: 'rgba(255,255,255,0.05)' }}
-                  />
-                  <Bar dataKey="sales" fill="url(#colorBar)" radius={[8, 8, 0, 0]} maxBarSize={60} />
-                </BarChart>
+                {data?.chartTypes?.[1] === 'Scatter' ? (
+                  <ScatterChart data={categoryData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" vertical={false} />
+                    <XAxis dataKey="category" stroke="#ffffff50" fontSize={12} tickLine={false} axisLine={false} />
+                    <YAxis dataKey="sales" stroke="#ffffff50" fontSize={12} tickLine={false} axisLine={false} />
+                    <ZAxis range={[200, 200]} />
+                    <Tooltip contentStyle={{ backgroundColor: 'rgba(0,0,0,0.9)', border: '1px solid rgba(59,130,246,0.3)', borderRadius: '12px' }} itemStyle={{ color: '#fff' }} cursor={{ strokeDasharray: '3 3' }} />
+                    <Scatter name="Sales" dataKey="sales" fill="#ec4899" />
+                  </ScatterChart>
+                ) : data?.chartTypes?.[1] === 'Line' ? (
+                  <LineChart data={categoryData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" vertical={false} />
+                    <XAxis dataKey="category" stroke="#ffffff50" fontSize={12} tickLine={false} axisLine={false} />
+                    <YAxis stroke="#ffffff50" fontSize={12} tickLine={false} axisLine={false} />
+                    <Tooltip contentStyle={{ backgroundColor: 'rgba(0,0,0,0.9)', border: '1px solid rgba(59,130,246,0.3)', borderRadius: '12px' }} itemStyle={{ color: '#fff' }} />
+                    <Line type="monotone" dataKey="sales" stroke="#f59e0b" strokeWidth={3} dot={{ fill: '#f59e0b', strokeWidth: 2, r: 4 }} />
+                  </LineChart>
+                ) : data?.chartTypes?.[1] === 'Area' ? (
+                  <AreaChart data={categoryData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" vertical={false} />
+                    <XAxis dataKey="category" stroke="#ffffff50" fontSize={12} tickLine={false} axisLine={false} />
+                    <YAxis stroke="#ffffff50" fontSize={12} tickLine={false} axisLine={false} />
+                    <Tooltip contentStyle={{ backgroundColor: 'rgba(0,0,0,0.9)', border: '1px solid rgba(59,130,246,0.3)', borderRadius: '12px' }} itemStyle={{ color: '#fff' }} />
+                    <Area type="monotone" dataKey="sales" stroke="#10b981" fill="#10b981" fillOpacity={0.3} />
+                  </AreaChart>
+                ) : (
+                  <BarChart data={categoryData} margin={{ top: 20 }}>
+                    <defs>
+                      <linearGradient id="colorBar" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#60a5fa" stopOpacity={1}/>
+                        <stop offset="100%" stopColor="#3b82f6" stopOpacity={0.6}/>
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" vertical={false} />
+                    <XAxis dataKey="category" stroke="#ffffff50" fontSize={12} tickLine={false} axisLine={false} />
+                    <YAxis stroke="#ffffff50" fontSize={12} tickLine={false} axisLine={false} />
+                    <Tooltip contentStyle={{ backgroundColor: 'rgba(0,0,0,0.9)', border: '1px solid rgba(59,130,246,0.3)', borderRadius: '12px', color: '#fff' }} cursor={{ fill: 'rgba(255,255,255,0.05)' }} />
+                    <Bar dataKey="sales" fill="url(#colorBar)" radius={[8, 8, 0, 0]} maxBarSize={60} />
+                  </BarChart>
+                )}
               </ResponsiveContainer>
             </ChartCard>
           </div>
@@ -212,29 +261,48 @@ export default function InsightsCenter({ data, view = 'dashboard', onNext }: { d
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               <ChartCard title={dynamicText.chartInsights.titleSegment} observation={dynamicText.chartInsights.obsSegment} interpretation={dynamicText.chartInsights.intSegment} hasData={userSegments && userSegments.length > 0}>
                 <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={userSegments}
-                      cx="50%"
-                      cy="45%"
-                      innerRadius={70}
-                      outerRadius={100}
-                      paddingAngle={8}
-                      dataKey="value"
-                      stroke="rgba(0,0,0,0.2)"
-                      strokeWidth={2}
-                      cornerRadius={6}
-                    >
-                      {userSegments.map((entry: any, index: number) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip 
-                      contentStyle={{ backgroundColor: 'rgba(0,0,0,0.8)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', color: '#fff' }}
-                      itemStyle={{ color: '#fff' }}
-                    />
-                    <Legend verticalAlign="bottom" height={36} iconType="circle" />
-                  </PieChart>
+                  {data?.chartTypes?.[2] === 'Scatter' ? (
+                    <ScatterChart data={userSegments}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" vertical={false} />
+                      <XAxis dataKey="name" stroke="#ffffff50" fontSize={12} tickLine={false} axisLine={false} />
+                      <YAxis dataKey="value" stroke="#ffffff50" fontSize={12} tickLine={false} axisLine={false} />
+                      <ZAxis range={[300, 300]} />
+                      <Tooltip contentStyle={{ backgroundColor: 'rgba(0,0,0,0.9)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px' }} itemStyle={{ color: '#fff' }} cursor={{ strokeDasharray: '3 3' }} />
+                      <Scatter name="Segment" dataKey="value" fill="#8b5cf6" />
+                    </ScatterChart>
+                  ) : data?.chartTypes?.[2] === 'Bar' ? (
+                    <BarChart data={userSegments} layout="vertical">
+                      <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" horizontal={false} />
+                      <XAxis type="number" stroke="#ffffff50" fontSize={12} tickLine={false} axisLine={false} />
+                      <YAxis dataKey="name" type="category" stroke="#ffffff50" fontSize={12} tickLine={false} axisLine={false} width={100} />
+                      <Tooltip contentStyle={{ backgroundColor: 'rgba(0,0,0,0.9)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px' }} cursor={{ fill: 'rgba(255,255,255,0.05)' }} />
+                      <Bar dataKey="value" fill="#ec4899" radius={[0, 4, 4, 0]} maxBarSize={40} />
+                    </BarChart>
+                  ) : (
+                    <PieChart>
+                      <Pie
+                        data={userSegments}
+                        cx="50%"
+                        cy="45%"
+                        innerRadius={70}
+                        outerRadius={100}
+                        paddingAngle={8}
+                        dataKey="value"
+                        stroke="rgba(0,0,0,0.2)"
+                        strokeWidth={2}
+                        cornerRadius={6}
+                      >
+                        {userSegments.map((entry: any, index: number) => (
+                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <Tooltip 
+                        contentStyle={{ backgroundColor: 'rgba(0,0,0,0.8)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', color: '#fff' }}
+                        itemStyle={{ color: '#fff' }}
+                      />
+                      <Legend verticalAlign="bottom" height={36} iconType="circle" />
+                    </PieChart>
+                  )}
                 </ResponsiveContainer>
               </ChartCard>
             </div>
