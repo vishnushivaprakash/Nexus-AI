@@ -350,13 +350,13 @@ async def chat_endpoint(request: ChatRequest):
         print("Analysis Type: Unrelated")
         print("Status: Success (Rejected)")
         return {
-            "answer": "This question cannot be answered using the currently uploaded dataset because the required information does not exist in the data.",
+            "answer": "This question cannot be answered from the currently selected dataset.",
             "code": ""
         }
         
     if is_insight_q:
         print("Analysis Type: Dataset Related Insight Question")
-        answer = f"### Answer\nBased on '{dataset_name}', the dataset contains {len(df)} rows and {len(df.columns)} columns. Key observations indicate varying distributions across numeric fields.\n\n### Relevant Data\nColumns analyzed: {', '.join(columns)}\n\n### Reasoning\nExtracted structural metadata from the dataset to provide a high-level summary.\n\n### Confidence\nHigh"
+        answer = f"Dataset: {dataset_name}\nTotal Rows: {len(df)}\nTotal Columns: {len(df.columns)}\n\nKey observations indicate varying distributions across numeric fields."
         print("Status: Success")
         return {"answer": answer, "code": ""}
         
@@ -384,9 +384,9 @@ async def chat_endpoint(request: ChatRequest):
                 associated_name = ""
                 if len(cat_cols) > 0:
                     row = df[df[target_col] == max_val].iloc[0]
-                    associated_name = f" associated with {cat_cols[0]} '{row[cat_cols[0]]}'"
+                    associated_name = f"\nAssociated {cat_cols[0]}: {row[cat_cols[0]]}"
                     
-                answer = f"### Answer\nThe highest value in {target_col} is **{max_val}**{associated_name}.\n\n### Relevant Data\nColumn: {target_col} | Max: {max_val}\n\n### Reasoning\nThe {target_col} column was analyzed and the maximum value was identified.\n\n### Confidence\nHigh"
+                answer = f"Highest {target_col}: {max_val}{associated_name}"
                 print("Status: Success")
                 return {"answer": answer, "code": f"df['{target_col}'].max()"}
                 
@@ -394,7 +394,7 @@ async def chat_endpoint(request: ChatRequest):
             target_col = mentioned_cols[0] if mentioned_cols else df.select_dtypes(include=['object']).columns[0] if len(df.select_dtypes(include=['object']).columns) > 0 else columns[0]
             mode_val = df[target_col].mode()[0]
             count = (df[target_col] == mode_val).sum()
-            answer = f"### Answer\nThe most common {target_col} is **{mode_val}**.\n\n### Relevant Data\nColumn: {target_col} | Value: {mode_val} | Occurrences: {count}\n\n### Reasoning\nCalculated the statistical mode of the {target_col} column.\n\n### Confidence\nHigh"
+            answer = f"Most Common {target_col}: {mode_val}\nCount: {count}"
             print("Status: Success")
             return {"answer": answer, "code": f"df['{target_col}'].mode()[0]"}
             
@@ -412,19 +412,63 @@ async def chat_endpoint(request: ChatRequest):
                     
             if target_col:
                 mean_val = df[target_col].mean()
-                answer = f"### Answer\nThe average {target_col} is **{round(mean_val, 2)}**.\n\n### Relevant Data\nColumn: {target_col} | Mean: {round(mean_val, 2)}\n\n### Reasoning\nComputed the arithmetic mean for the {target_col} column across all valid rows.\n\n### Confidence\nHigh"
+                answer = f"Average {target_col}: {round(mean_val, 2)}"
                 print("Status: Success")
                 return {"answer": answer, "code": f"df['{target_col}'].mean()"}
                 
+        elif "lowest" in user_msg or "min" in user_msg:
+            # find numeric column
+            target_col = None
+            if mentioned_cols:
+                for c in mentioned_cols:
+                    if pd.api.types.is_numeric_dtype(df[c]):
+                        target_col = c
+                        break
+            if not target_col:
+                numeric_cols = df.select_dtypes(include=['number']).columns
+                if len(numeric_cols) > 0:
+                    target_col = numeric_cols[0]
+                    
+            if target_col:
+                min_val = df[target_col].min()
+                # find associated row name if possible
+                cat_cols = df.select_dtypes(include=['object', 'category']).columns
+                associated_name = ""
+                if len(cat_cols) > 0:
+                    row = df[df[target_col] == min_val].iloc[0]
+                    associated_name = f"\nAssociated {cat_cols[0]}: {row[cat_cols[0]]}"
+                    
+                answer = f"Lowest {target_col}: {min_val}{associated_name}"
+                print("Status: Success")
+                return {"answer": answer, "code": f"df['{target_col}'].min()"}
+                
+        elif "total" in user_msg or "sum" in user_msg:
+            target_col = None
+            if mentioned_cols:
+                for c in mentioned_cols:
+                    if pd.api.types.is_numeric_dtype(df[c]):
+                        target_col = c
+                        break
+            if not target_col:
+                numeric_cols = df.select_dtypes(include=['number']).columns
+                if len(numeric_cols) > 0:
+                    target_col = numeric_cols[0]
+                    
+            if target_col:
+                sum_val = df[target_col].sum()
+                answer = f"Total {target_col}: {round(sum_val, 2)}"
+                print("Status: Success")
+                return {"answer": answer, "code": f"df['{target_col}'].sum()"}
+                
         # Default computation fallback
-        answer = f"### Answer\nBased on your query, the dataset '{dataset_name}' contains {len(df)} records spanning {', '.join(columns)}.\n\n### Relevant Data\nRows: {len(df)}\n\n### Reasoning\nScanned dataset schema for requested variables.\n\n### Confidence\nMedium"
+        answer = f"Dataset: {dataset_name}\nTotal Records: {len(df)}"
         print("Status: Success")
         return {"answer": answer, "code": ""}
         
     except Exception as e:
         print(f"Status: Failed - {str(e)}")
         return {
-            "answer": "This question cannot be answered using the currently uploaded dataset because the required information does not exist in the data or computation failed.",
+            "answer": "This question cannot be answered from the currently selected dataset.",
             "code": ""
         }
 
