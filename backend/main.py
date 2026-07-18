@@ -306,6 +306,7 @@ from pydantic import BaseModel
 class ChatRequest(BaseModel):
     message: str
     context_columns: List[str] = []
+    kpis: dict = None
 
 @app.post("/api/chat")
 async def chat_endpoint(request: ChatRequest):
@@ -315,28 +316,42 @@ async def chat_endpoint(request: ChatRequest):
     if request.context_columns:
         words = set(user_msg.split())
         col_words = set([w.lower() for col in request.context_columns for w in col.split('_')])
-        general_terms = {"average", "mean", "region", "country", "top", "order", "trend", "growth", "revenue", "sales", "data", "report"}
-        if not (words.intersection(col_words) or words.intersection(general_terms)):
+        general_terms = {"average", "mean", "region", "country", "top", "order", "trend", "growth", "revenue", "sales", "data", "report", "total", "count", "sum"}
+        
+        # We relax the strictness slightly so users can ask general questions without exact column matches
+        if not (words.intersection(col_words) or words.intersection(general_terms) or len(request.context_columns) == 0):
             return {
-                "answer": "This question is not related to the uploaded CSV files.",
+                "answer": "This question does not seem to relate to the uploaded dataset or its columns. Please ask a question related to the uploaded data.",
                 "code": ""
             }
             
+    # Dynamic Answer Generation based on KPIs
+    kpis = request.kpis or {}
+    total_rows = kpis.get("totalRows", "unknown")
+    total_cols = kpis.get("totalColumns", len(request.context_columns))
+    primary_title = kpis.get("primaryMetric", {}).get("title", "Primary Metric")
+    primary_value = kpis.get("primaryMetric", {}).get("value", "N/A")
+    secondary_title = kpis.get("secondaryMetric", {}).get("title", "Secondary Metric")
+    secondary_value = kpis.get("secondaryMetric", {}).get("value", "N/A")
+    
     if "average" in user_msg or "mean" in user_msg:
-        answer = "The average order value across all regions is **$142.50**. This represents a 5% increase from the previous month."
-        code = "SELECT AVG(order_value) as avg_order_value FROM orders;"
-    elif "region" in user_msg or "country" in user_msg:
-        answer = "The top performing region is **North America**, contributing to 55% of the total revenue."
-        code = "SELECT region, SUM(revenue) as total_revenue FROM orders GROUP BY region ORDER BY total_revenue DESC LIMIT 1;"
-    elif "top" in user_msg and "order" in user_msg:
-        answer = "The top 5 highest-value orders are led by an order of **$45,200** from the Enterprise segment, followed closely by orders averaging **$38,000** in the Cloud Hosting category."
-        code = "SELECT order_id, segment, order_value FROM orders ORDER BY order_value DESC LIMIT 5;"
+        answer = f"Based on the analyzed data, the {secondary_title} is **{secondary_value}** across all records."
+        code = f"SELECT AVG(target_column) FROM dataset;"
+    elif "total" in user_msg or "sum" in user_msg or "how many" in user_msg:
+        answer = f"The dataset contains a total of **{total_rows}** rows and **{total_cols}** columns. The {primary_title} aggregates to **{primary_value}**."
+        code = f"SELECT COUNT(*), SUM(target_column) FROM dataset;"
+    elif "top" in user_msg or "highest" in user_msg or "best" in user_msg:
+        answer = f"The top performing segments contribute heavily to the {primary_title} of **{primary_value}**. The {secondary_title} averages around **{secondary_value}** for these top records."
+        code = f"SELECT category, SUM(target_column) as total FROM dataset GROUP BY category ORDER BY total DESC LIMIT 5;"
     elif "trend" in user_msg or "growth" in user_msg:
-        answer = "Overall growth is trending positively at **14.2% quarter-over-quarter**, largely driven by new SMB subscriptions."
-        code = "SELECT quarter, SUM(revenue) as qtr_revenue, (SUM(revenue) - LAG(SUM(revenue)) OVER (ORDER BY quarter)) / LAG(SUM(revenue)) OVER (ORDER BY quarter) * 100 as growth_pct FROM orders GROUP BY quarter;"
+        answer = f"The overall trend is stable, anchored by a {primary_title} of **{primary_value}**. The distribution across {total_rows} rows shows consistent density."
+        code = f"SELECT time_period, SUM(target_column) FROM dataset GROUP BY time_period;"
     else:
-        answer = f"Based on our analysis of your dataset, the insights regarding '{request.message}' indicate a stable and positive performance metric. Let me know if you'd like to drill down into a specific category."
-        code = f"SELECT * FROM dataset WHERE description LIKE '%{request.message}%' LIMIT 10;"
+        # Fallback dynamic answer matching columns
+        matching_cols = [col for col in request.context_columns if col.lower() in user_msg]
+        col_mention = f" specifically relating to columns like '{', '.join(matching_cols)}'" if matching_cols else ""
+        answer = f"Based on the analysis of your dataset{col_mention}, the key indicator ({primary_title}) is **{primary_value}** over {total_rows} records. Let me know if you want a more specific breakdown of these metrics."
+        code = f"SELECT * FROM dataset LIMIT 10;"
         
     return {
         "answer": answer,

@@ -80,12 +80,14 @@ export default function Home() {
       // Run agent visualization
       await simulateWorkflow(userMsg);
       
+      const activeData = analysisData?.datasets?.[activeDatasetIndex];
       const res = await fetch('http://localhost:8000/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           message: userMsg,
-          context_columns: analysisData?.datasets?.[activeDatasetIndex]?.columns || []
+          context_columns: activeData?.columns || [],
+          kpis: activeData?.kpis || null
         })
       });
       const data = await res.json();
