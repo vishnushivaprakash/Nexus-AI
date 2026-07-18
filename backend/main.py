@@ -5,13 +5,15 @@ from fastapi.middleware.cors import CORSMiddleware
 import pandas as pd
 import io
 import json
-import json
 import random
 from motor.motor_asyncio import AsyncIOMotorClient
 from pydantic import BaseModel, Field
 from datetime import datetime
+from collections import defaultdict
 
-app = FastAPI(title="Nexus Intelligence API")
+GLOBAL_DATASETS = {}
+
+app = FastAPI(title="Nexora AI Data Analyst API")
 
 MONGO_DETAILS = "mongodb+srv://vishnu:vishnu007@cluster0.gxre5nj.mongodb.net/?appName=Cluster0"
 client = AsyncIOMotorClient(MONGO_DETAILS)
@@ -289,6 +291,7 @@ async def analyze_csv(files: List[UploadFile] = File(...)):
         combo = chart_combos[i % len(chart_combos)]
         analysis = generate_analysis_for_df(df, filenames[i], combo)
         datasets_responses.append(analysis)
+        GLOBAL_DATASETS[filenames[i]] = df
         
     # Process combined dataset if there is more than 1 file
     if len(dfs) > 1:
@@ -296,6 +299,7 @@ async def analyze_csv(files: List[UploadFile] = File(...)):
         combo = chart_combos[(len(dfs)) % len(chart_combos)]
         analysis = generate_analysis_for_df(combined_df, "Combined CSV", combo)
         datasets_responses.append(analysis)
+        GLOBAL_DATASETS["Combined CSV"] = combined_df
         
     return {
         "datasets": datasets_responses
@@ -305,58 +309,124 @@ from pydantic import BaseModel
 
 class ChatRequest(BaseModel):
     message: str
-    context_columns: List[str] = []
-    kpis: dict = None
+    dataset_name: str
 
 @app.post("/api/chat")
 async def chat_endpoint(request: ChatRequest):
     user_msg = request.message.lower()
+    dataset_name = request.dataset_name
     
-    # Check for relevance if context_columns are provided
-    if request.context_columns:
-        words = set(user_msg.split())
-        col_words = set([w.lower() for col in request.context_columns for w in col.split('_')])
-        general_terms = {"average", "mean", "region", "country", "top", "order", "trend", "growth", "revenue", "sales", "data", "report", "total", "count", "sum"}
+    print(f"\n--- DEBUG LOG ---")
+    print(f"Current Dataset: {dataset_name}")
+    print(f"Question: {request.message}")
+    
+    if dataset_name not in GLOBAL_DATASETS:
+        print("Status: Failed - Dataset not found")
+        return {
+            "answer": "Error: The selected dataset is not found in memory. Please re-upload.",
+            "code": ""
+        }
         
-        # We relax the strictness slightly so users can ask general questions without exact column matches
-        if not (words.intersection(col_words) or words.intersection(general_terms) or len(request.context_columns) == 0):
-            return {
-                "answer": "This question does not seem to relate to the uploaded dataset or its columns. Please ask a question related to the uploaded data.",
-                "code": ""
-            }
+    df = GLOBAL_DATASETS[dataset_name]
+    columns = [col for col in df.columns]
+    print(f"Detected Columns: {', '.join(columns)}")
+    
+    # NLP / Heuristic Engine
+    # Find mentioned columns
+    mentioned_cols = []
+    for col in columns:
+        if col.lower().replace("_", " ") in user_msg or col.lower() in user_msg:
+            mentioned_cols.append(col)
             
-    # Dynamic Answer Generation based on KPIs
-    kpis = request.kpis or {}
-    total_rows = kpis.get("totalRows", "unknown")
-    total_cols = kpis.get("totalColumns", len(request.context_columns))
-    primary_title = kpis.get("primaryMetric", {}).get("title", "Primary Metric")
-    primary_value = kpis.get("primaryMetric", {}).get("value", "N/A")
-    secondary_title = kpis.get("secondaryMetric", {}).get("title", "Secondary Metric")
-    secondary_value = kpis.get("secondaryMetric", {}).get("value", "N/A")
+    # Check for insight/trend questions
+    insight_keywords = ["insight", "trend", "recommendation", "summary", "overview", "analyze"]
+    is_insight_q = any(k in user_msg for k in insight_keywords)
     
-    if "average" in user_msg or "mean" in user_msg:
-        answer = f"Based on the analyzed data, the {secondary_title} is **{secondary_value}** across all records."
-        code = f"SELECT AVG(target_column) FROM dataset;"
-    elif "total" in user_msg or "sum" in user_msg or "how many" in user_msg:
-        answer = f"The dataset contains a total of **{total_rows}** rows and **{total_cols}** columns. The {primary_title} aggregates to **{primary_value}**."
-        code = f"SELECT COUNT(*), SUM(target_column) FROM dataset;"
-    elif "top" in user_msg or "highest" in user_msg or "best" in user_msg:
-        answer = f"The top performing segments contribute heavily to the {primary_title} of **{primary_value}**. The {secondary_title} averages around **{secondary_value}** for these top records."
-        code = f"SELECT category, SUM(target_column) as total FROM dataset GROUP BY category ORDER BY total DESC LIMIT 5;"
-    elif "trend" in user_msg or "growth" in user_msg:
-        answer = f"The overall trend is stable, anchored by a {primary_title} of **{primary_value}**. The distribution across {total_rows} rows shows consistent density."
-        code = f"SELECT time_period, SUM(target_column) FROM dataset GROUP BY time_period;"
-    else:
-        # Fallback dynamic answer matching columns
-        matching_cols = [col for col in request.context_columns if col.lower() in user_msg]
-        col_mention = f" specifically relating to columns like '{', '.join(matching_cols)}'" if matching_cols else ""
-        answer = f"Based on the analysis of your dataset{col_mention}, the key indicator ({primary_title}) is **{primary_value}** over {total_rows} records. Let me know if you want a more specific breakdown of these metrics."
-        code = f"SELECT * FROM dataset LIMIT 10;"
+    # Check for general terms to see if it's unrelated
+    general_data_terms = ["average", "mean", "highest", "lowest", "max", "min", "most common", "top", "count", "how many", "total", "sum", "frequent", "show", "what is"]
+    is_data_q = any(k in user_msg for k in general_data_terms) or len(mentioned_cols) > 0
+    
+    if not (is_data_q or is_insight_q):
+        print("Analysis Type: Unrelated")
+        print("Status: Success (Rejected)")
+        return {
+            "answer": "This question cannot be answered using the currently uploaded dataset because the required information does not exist in the data.",
+            "code": ""
+        }
         
-    return {
-        "answer": answer,
-        "code": code
-    }
+    if is_insight_q:
+        print("Analysis Type: Dataset Related Insight Question")
+        answer = f"### Answer\nBased on '{dataset_name}', the dataset contains {len(df)} rows and {len(df.columns)} columns. Key observations indicate varying distributions across numeric fields.\n\n### Relevant Data\nColumns analyzed: {', '.join(columns)}\n\n### Reasoning\nExtracted structural metadata from the dataset to provide a high-level summary.\n\n### Confidence\nHigh"
+        print("Status: Success")
+        return {"answer": answer, "code": ""}
+        
+    print("Analysis Type: Dataset Question")
+    
+    # Perform actual computation
+    try:
+        if "highest" in user_msg or "max" in user_msg:
+            # find numeric column
+            target_col = None
+            if mentioned_cols:
+                for c in mentioned_cols:
+                    if pd.api.types.is_numeric_dtype(df[c]):
+                        target_col = c
+                        break
+            if not target_col:
+                numeric_cols = df.select_dtypes(include=['number']).columns
+                if len(numeric_cols) > 0:
+                    target_col = numeric_cols[0]
+                    
+            if target_col:
+                max_val = df[target_col].max()
+                # find associated row name if possible
+                cat_cols = df.select_dtypes(include=['object', 'category']).columns
+                associated_name = ""
+                if len(cat_cols) > 0:
+                    row = df[df[target_col] == max_val].iloc[0]
+                    associated_name = f" associated with {cat_cols[0]} '{row[cat_cols[0]]}'"
+                    
+                answer = f"### Answer\nThe highest value in {target_col} is **{max_val}**{associated_name}.\n\n### Relevant Data\nColumn: {target_col} | Max: {max_val}\n\n### Reasoning\nThe {target_col} column was analyzed and the maximum value was identified.\n\n### Confidence\nHigh"
+                print("Status: Success")
+                return {"answer": answer, "code": f"df['{target_col}'].max()"}
+                
+        elif "most common" in user_msg or "frequent" in user_msg:
+            target_col = mentioned_cols[0] if mentioned_cols else df.select_dtypes(include=['object']).columns[0] if len(df.select_dtypes(include=['object']).columns) > 0 else columns[0]
+            mode_val = df[target_col].mode()[0]
+            count = (df[target_col] == mode_val).sum()
+            answer = f"### Answer\nThe most common {target_col} is **{mode_val}**.\n\n### Relevant Data\nColumn: {target_col} | Value: {mode_val} | Occurrences: {count}\n\n### Reasoning\nCalculated the statistical mode of the {target_col} column.\n\n### Confidence\nHigh"
+            print("Status: Success")
+            return {"answer": answer, "code": f"df['{target_col}'].mode()[0]"}
+            
+        elif "average" in user_msg or "mean" in user_msg:
+            target_col = None
+            if mentioned_cols:
+                for c in mentioned_cols:
+                    if pd.api.types.is_numeric_dtype(df[c]):
+                        target_col = c
+                        break
+            if not target_col:
+                numeric_cols = df.select_dtypes(include=['number']).columns
+                if len(numeric_cols) > 0:
+                    target_col = numeric_cols[0]
+                    
+            if target_col:
+                mean_val = df[target_col].mean()
+                answer = f"### Answer\nThe average {target_col} is **{round(mean_val, 2)}**.\n\n### Relevant Data\nColumn: {target_col} | Mean: {round(mean_val, 2)}\n\n### Reasoning\nComputed the arithmetic mean for the {target_col} column across all valid rows.\n\n### Confidence\nHigh"
+                print("Status: Success")
+                return {"answer": answer, "code": f"df['{target_col}'].mean()"}
+                
+        # Default computation fallback
+        answer = f"### Answer\nBased on your query, the dataset '{dataset_name}' contains {len(df)} records spanning {', '.join(columns)}.\n\n### Relevant Data\nRows: {len(df)}\n\n### Reasoning\nScanned dataset schema for requested variables.\n\n### Confidence\nMedium"
+        print("Status: Success")
+        return {"answer": answer, "code": ""}
+        
+    except Exception as e:
+        print(f"Status: Failed - {str(e)}")
+        return {
+            "answer": "This question cannot be answered using the currently uploaded dataset because the required information does not exist in the data or computation failed.",
+            "code": ""
+        }
 
 from fastapi.responses import FileResponse
 import tempfile

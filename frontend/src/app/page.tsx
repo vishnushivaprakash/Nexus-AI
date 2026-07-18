@@ -86,8 +86,7 @@ export default function Home() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           message: userMsg,
-          context_columns: activeData?.columns || [],
-          kpis: activeData?.kpis || null
+          dataset_name: activeData?.filename || ""
         })
       });
       const data = await res.json();
