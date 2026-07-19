@@ -231,8 +231,8 @@ export default function Home() {
         </aside>
 
         {/* Main Content Area */}
-        <main className="flex-1 p-6 lg:p-10 relative z-10 flex flex-col overflow-y-auto h-[calc(100vh-4rem)]">
-          <div className="max-w-5xl w-full mx-auto flex-1 flex flex-col">
+        <main className="flex-1 p-6 lg:p-10 relative z-10 flex flex-col h-full overflow-hidden">
+          <div className="max-w-5xl w-full mx-auto flex-1 flex flex-col h-full overflow-hidden">
             
             {/* Content Area Box */}
             <div className="flex-1 glass-card rounded-2xl min-h-[550px] flex flex-col relative overflow-hidden border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.4)] animate-in fade-in zoom-in-95 duration-700">
@@ -556,25 +556,25 @@ export default function Home() {
                     </div>
                   )}
                 </div>
-                
-                <div className="mt-auto pt-4 sticky bottom-0 bg-transparent">
-                  <div className="relative glass rounded-2xl p-2 border border-white/10 shadow-[0_-10px_40px_rgba(0,0,0,0.5)] focus-within:border-primary/50 transition-colors duration-300 focus-within:shadow-[0_0_20px_rgba(139,92,246,0.2)]">
-                    <input 
-                      type="text" 
-                      value={chatInput}
-                      onChange={(e) => setChatInput(e.target.value)}
-                      onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
-                      placeholder="Ask a question about your data..." 
-                      className="w-full h-12 bg-transparent pl-4 pr-14 text-sm focus:outline-none text-white placeholder:text-muted-foreground font-medium"
-                    />
-                    <button 
-                      onClick={handleSendMessage}
-                      disabled={isTyping}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-gradient-to-r from-primary to-blue-600 text-white flex items-center justify-center rounded-xl hover:shadow-[0_0_15px_rgba(139,92,246,0.6)] transition-all duration-300 disabled:opacity-50 hover:scale-105"
-                    >
-                      <ArrowRight className="w-5 h-5" />
-                    </button>
-                  </div>
+              </div>
+              
+              <div className="p-8 pt-4 pb-8 bg-[#0a0a0a]/90 backdrop-blur-md border-t border-white/5 z-20">
+                <div className="relative glass rounded-2xl p-2 border border-white/10 shadow-[0_-10px_40px_rgba(0,0,0,0.5)] focus-within:border-primary/50 transition-colors duration-300 focus-within:shadow-[0_0_20px_rgba(139,92,246,0.2)]">
+                  <input 
+                    type="text" 
+                    value={chatInput}
+                    onChange={(e) => setChatInput(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
+                    placeholder="Ask a question about your data..." 
+                    className="w-full h-12 bg-transparent pl-4 pr-14 text-sm focus:outline-none text-white placeholder:text-muted-foreground font-medium"
+                  />
+                  <button 
+                    onClick={handleSendMessage}
+                    disabled={isTyping}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-gradient-to-r from-primary to-blue-600 text-white flex items-center justify-center rounded-xl hover:shadow-[0_0_15px_rgba(139,92,246,0.6)] transition-all duration-300 disabled:opacity-50 hover:scale-105"
+                  >
+                    <ArrowRight className="w-5 h-5" />
+                  </button>
                 </div>
               </div>
             </div>
