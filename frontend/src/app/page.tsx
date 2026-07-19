@@ -159,7 +159,7 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-transparent text-foreground flex flex-col font-sans relative overflow-hidden">
+    <div className="h-screen bg-transparent text-foreground flex flex-col font-sans relative overflow-hidden">
       
       {/* Decorative Orbs */}
       <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-primary/20 blur-[120px] pointer-events-none" />
