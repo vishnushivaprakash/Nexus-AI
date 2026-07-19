@@ -190,7 +190,7 @@ export default function Home() {
       </header>
 
       {/* Multi-Agent Visualizer */}
-      {currentStep === 'chat' && <AgentWorkflowBar />}
+      <AgentWorkflowBar />
 
       {/* Main Layout Grid */}
       <div className="flex-1 flex overflow-hidden">
