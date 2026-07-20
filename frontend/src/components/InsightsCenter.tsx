@@ -83,21 +83,21 @@ export default function InsightsCenter({ data, view = 'dashboard', onNext }: { d
   return (
     <div className="flex-1 w-full animate-in fade-in duration-500 flex flex-col h-full overflow-hidden">
       {/* Sticky Header */}
-      <div className="p-8 border-b border-white/10 flex items-center justify-between glass sticky top-0 z-50">
+      <div className="py-4 px-6 md:px-8 border-b border-white/10 flex items-center justify-between glass sticky top-0 z-50">
         <div>
-          <h2 className="text-3xl font-bold text-white tracking-tight flex items-center gap-3">
-            <Sparkles className="w-8 h-8 text-primary" />
+          <h2 className="text-xl font-bold text-white tracking-tight flex items-center gap-2">
+            <Sparkles className="w-5 h-5 text-primary" />
             AI Analytics Dashboard
           </h2>
-          <p className="text-muted-foreground text-sm font-medium mt-1">
+          <p className="text-muted-foreground text-xs font-medium mt-0.5">
             Data transformed into clear, actionable business decisions.
           </p>
         </div>
         <button 
           onClick={onNext}
-          className="bg-gradient-to-r from-primary to-blue-600 text-white px-6 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 hover:shadow-[0_0_20px_rgba(139,92,246,0.5)] transition-all duration-300 hover:scale-105"
+          className="bg-gradient-to-r from-primary to-blue-600 text-white px-4 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 hover:shadow-[0_0_15px_rgba(139,92,246,0.5)] transition-all duration-300 hover:scale-105"
         >
-          Ask Questions <ArrowRight className="w-4 h-4" />
+          Ask Questions <ArrowRight className="w-3.5 h-3.5" />
         </button>
       </div>
 

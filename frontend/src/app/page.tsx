@@ -33,6 +33,7 @@ export default function Home() {
   const [analysisData, setAnalysisData] = useState<any>(null);
   const [activeDatasetIndex, setActiveDatasetIndex] = useState(0);
   const [userEmail, setUserEmail] = useState<string>('user@example.com');
+  const [selectedChatFiles, setSelectedChatFiles] = useState<string[]>([]);
 
   const router = useRouter();
 
@@ -107,7 +108,8 @@ export default function Home() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           message: userMsg,
-          dataset_name: activeData?.filename || ""
+          dataset_name: activeData?.filename || "",
+          target_files: selectedChatFiles.length > 0 ? selectedChatFiles : files.map(f => f.name)
         })
       });
       const data = await res.json();
@@ -277,8 +279,7 @@ export default function Home() {
         </div>
         
         <div className="flex items-center gap-6 text-sm text-muted-foreground font-medium">
-          <button className="hover:text-white transition-colors">Documentation</button>
-          <button className="hover:text-white transition-colors">Support</button>
+
           <button onClick={() => setIsLightMode(!isLightMode)} className="w-9 h-9 rounded-full glass border border-white/10 flex items-center justify-center text-white hover:bg-white/10 transition-colors shadow-md" title="Toggle Theme">
             {isLightMode ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
           </button>
@@ -320,15 +321,7 @@ export default function Home() {
             })}
           </nav>
           
-          <div className="px-4 mt-auto">
-            <div className="p-4 rounded-xl bg-gradient-to-br from-primary/10 to-accent/10 border border-primary/20">
-              <h4 className="text-xs font-bold text-primary mb-1 uppercase tracking-wider">Storage Used</h4>
-              <div className="w-full h-1.5 bg-black/20 rounded-full overflow-hidden mb-2">
-                <div className="h-full bg-primary w-[45%]" />
-              </div>
-              <p className="text-[10px] text-muted-foreground font-medium">4.5 GB of 10 GB (45%)</p>
-            </div>
-          </div>
+
         </aside>
 
         {/* Main Content Area */}
@@ -609,43 +602,43 @@ export default function Home() {
                 <AgentWorkflowBar />
               </div>
               
-              <div className="p-4 border-b border-white/10 flex items-center justify-between glass shrink-0 z-10">
+              <div className="py-2 px-4 border-b border-white/10 flex items-center justify-between glass shrink-0 z-10">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center text-primary shadow-[0_0_15px_rgba(139,92,246,0.3)]">
-                    <MessageSquare className="w-5 h-5" />
+                  <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center text-primary shadow-[0_0_15px_rgba(139,92,246,0.3)]">
+                    <MessageSquare className="w-4 h-4" />
                   </div>
                   <div>
-                    <h2 className="text-lg font-bold text-white leading-tight">AI Assistant</h2>
-                    <p className="text-muted-foreground text-xs font-medium mt-0.5">Query your data in plain English</p>
+                    <h2 className="text-base font-bold text-white leading-tight">AI Assistant</h2>
+                    <p className="text-muted-foreground text-[10px] font-medium mt-0.5">Query your data in plain English</p>
                   </div>
                 </div>
                 <button 
                   onClick={() => setCurrentStep('reports')}
-                  className="text-sm font-bold glass px-4 py-2 rounded-xl hover:bg-white/10 border border-white/10 transition-all hover:border-white/30 text-white"
+                  className="text-xs font-bold glass px-3 py-1.5 rounded-lg hover:bg-white/10 border border-white/10 transition-all hover:border-white/30 text-white"
                 >
                   Next: Generate Report
                 </button>
               </div>
               
-              <div className="flex-1 min-h-0 p-8 overflow-y-auto overflow-x-hidden relative">
-                <div className="space-y-8 pb-4">
+              <div className="flex-1 min-h-0 p-4 lg:px-8 overflow-y-auto overflow-x-hidden relative">
+                <div className="space-y-6 pb-4">
                   {chatMessages.map((msg, idx) => (
-                    <div key={idx} className={clsx("flex gap-4 animate-in slide-in-from-bottom-2 duration-300", msg.role === 'user' ? "flex-row-reverse" : "flex-row")}>
+                    <div key={idx} className={clsx("flex gap-3 animate-in slide-in-from-bottom-2 duration-300", msg.role === 'user' ? "flex-row-reverse" : "flex-row")}>
                       {msg.role === 'user' ? (
-                        <div className="w-10 h-10 rounded-full glass border border-white/10 flex items-center justify-center shrink-0 font-bold text-sm text-white shadow-md">U</div>
+                        <div className="w-8 h-8 rounded-full glass border border-white/10 flex items-center justify-center shrink-0 font-bold text-xs text-white shadow-md">U</div>
                       ) : (
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-blue-500 flex items-center justify-center shrink-0 font-bold text-sm text-white shadow-[0_0_10px_rgba(139,92,246,0.5)]">AI</div>
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-blue-500 flex items-center justify-center shrink-0 font-bold text-xs text-white shadow-[0_0_10px_rgba(139,92,246,0.5)]">AI</div>
                       )}
-                      <div className={clsx("max-w-[85%] pt-1 space-y-3", msg.role === 'user' ? "text-right" : "text-left")}>
+                      <div className={clsx("max-w-[85%] pt-1 space-y-2", msg.role === 'user' ? "text-right" : "text-left")}>
                         <div className={clsx(
-                          "inline-block p-4 rounded-2xl text-sm font-medium leading-relaxed",
+                          "inline-block py-2 px-3 rounded-2xl text-xs font-medium leading-relaxed",
                           msg.role === 'user' ? "bg-white/10 text-white rounded-tr-sm border border-white/5" : "glass border-primary/20 text-white rounded-tl-sm shadow-lg"
                         )}>
                           <p dangerouslySetInnerHTML={{ __html: msg.text.replace(/\*\*(.*?)\*\*/g, '<strong class="text-primary font-bold drop-shadow-sm">$1</strong>') }} />
                         </div>
                         {msg.code && (
-                          <div className="glass p-4 rounded-xl border border-white/10 font-mono text-xs text-blue-300 whitespace-pre-wrap shadow-inner relative group text-left">
-                            <div className="absolute top-2 right-2 text-[10px] uppercase tracking-widest text-muted-foreground font-bold opacity-0 group-hover:opacity-100 transition-opacity">SQL</div>
+                          <div className="glass p-3 rounded-xl border border-white/10 font-mono text-[10px] text-blue-300 whitespace-pre-wrap shadow-inner relative group text-left">
+                            <div className="absolute top-1.5 right-2 text-[9px] uppercase tracking-widest text-muted-foreground font-bold opacity-0 group-hover:opacity-100 transition-opacity">SQL</div>
                             {msg.code}
                           </div>
                         )}
@@ -653,34 +646,76 @@ export default function Home() {
                     </div>
                   ))}
                   {isTyping && (
-                    <div className="flex gap-4 animate-in fade-in">
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-blue-500 flex items-center justify-center shrink-0 font-bold text-sm text-white shadow-[0_0_10px_rgba(139,92,246,0.5)]">AI</div>
-                      <div className="glass p-4 rounded-2xl rounded-tl-sm flex items-center gap-2">
-                        <div className="w-2 h-2 bg-primary rounded-full animate-bounce" />
-                        <div className="w-2 h-2 bg-primary rounded-full animate-bounce [animation-delay:0.2s]" />
-                        <div className="w-2 h-2 bg-primary rounded-full animate-bounce [animation-delay:0.4s]" />
+                    <div className="flex gap-3 animate-in fade-in">
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-blue-500 flex items-center justify-center shrink-0 font-bold text-xs text-white shadow-[0_0_10px_rgba(139,92,246,0.5)]">AI</div>
+                      <div className="glass py-2 px-3 rounded-2xl rounded-tl-sm flex items-center gap-2">
+                        <div className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce" />
+                        <div className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce [animation-delay:0.2s]" />
+                        <div className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce [animation-delay:0.4s]" />
                       </div>
                     </div>
                   )}
                 </div>
               </div>
               
-              <div className="p-8 pt-0 shrink-0">
-                <div className="relative glass rounded-2xl p-2 border border-white/10 shadow-[0_-10px_40px_rgba(0,0,0,0.5)] focus-within:border-primary/50 transition-colors duration-300 focus-within:shadow-[0_0_20px_rgba(139,92,246,0.2)]">
+              <div className="p-4 lg:px-8 shrink-0 flex flex-col gap-2">
+                {/* File selection pills */}
+                {files.length > 0 && (
+                  <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+                    <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold mr-1">Target Data:</span>
+                    <button 
+                      onClick={() => setSelectedChatFiles([])}
+                      className={clsx(
+                        "px-2.5 py-1 rounded-full text-[10px] font-bold transition-all whitespace-nowrap",
+                        selectedChatFiles.length === 0 
+                          ? "bg-primary text-white shadow-[0_0_10px_rgba(139,92,246,0.4)]" 
+                          : "glass border border-white/10 text-muted-foreground hover:text-white hover:border-white/30"
+                      )}
+                    >
+                      All Files
+                    </button>
+                    {files.map((f, i) => {
+                      const isSelected = selectedChatFiles.includes(f.name);
+                      return (
+                        <button
+                          key={i}
+                          onClick={() => {
+                            if (isSelected) {
+                              setSelectedChatFiles(prev => prev.filter(name => name !== f.name));
+                            } else {
+                              setSelectedChatFiles(prev => [...prev, f.name]);
+                            }
+                          }}
+                          className={clsx(
+                            "px-2.5 py-1 rounded-full text-[10px] font-bold transition-all whitespace-nowrap flex items-center gap-1",
+                            isSelected
+                              ? "bg-gradient-to-r from-blue-500/20 to-primary/20 border border-primary/50 text-white shadow-[0_0_10px_rgba(139,92,246,0.2)]"
+                              : "glass border border-white/10 text-muted-foreground hover:text-white hover:border-white/30"
+                          )}
+                        >
+                          <FileText className="w-3 h-3" />
+                          {f.name}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+                
+                <div className="relative glass rounded-xl p-1 border border-white/10 shadow-[0_-10px_40px_rgba(0,0,0,0.5)] focus-within:border-primary/50 transition-colors duration-300 focus-within:shadow-[0_0_20px_rgba(139,92,246,0.2)]">
                   <input 
                     type="text" 
                     value={chatInput}
                     onChange={(e) => setChatInput(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
                     placeholder="Ask a question about your data..." 
-                    className="w-full h-14 bg-transparent pl-5 pr-16 text-base focus:outline-none text-white placeholder:text-muted-foreground font-medium"
+                    className="w-full h-10 bg-transparent pl-4 pr-12 text-sm focus:outline-none text-white placeholder:text-muted-foreground font-medium"
                   />
                   <button 
                     onClick={handleSendMessage}
                     disabled={isTyping}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 w-12 h-12 bg-gradient-to-r from-primary to-blue-600 text-white flex items-center justify-center rounded-xl hover:shadow-[0_0_15px_rgba(139,92,246,0.6)] transition-all duration-300 disabled:opacity-50 hover:scale-105"
+                    className="absolute right-1 top-1/2 -translate-y-1/2 w-8 h-8 bg-gradient-to-r from-primary to-blue-600 text-white flex items-center justify-center rounded-lg hover:shadow-[0_0_15px_rgba(139,92,246,0.6)] transition-all duration-300 disabled:opacity-50 hover:scale-105"
                   >
-                    <ArrowRight className="w-6 h-6" />
+                    <ArrowRight className="w-4 h-4" />
                   </button>
                 </div>
               </div>

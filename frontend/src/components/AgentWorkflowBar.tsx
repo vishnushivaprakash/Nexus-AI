@@ -69,8 +69,8 @@ export default function AgentWorkflowBar() {
               transition={{ delay: index * 0.05 }}
               onClick={() => setActiveAgentId(agent.id)}
               className={clsx(
-                "shrink-0 w-48 p-3 rounded-lg border cursor-pointer transition-all duration-300 snap-center relative overflow-hidden group",
-                isSelected ? "ring-2 ring-primary ring-offset-2 ring-offset-black" : "hover:border-white/30",
+                "shrink-0 w-36 p-2 rounded-lg border cursor-pointer transition-all duration-300 snap-center relative overflow-hidden group",
+                isSelected ? "ring-1 ring-primary ring-offset-1 ring-offset-black" : "hover:border-white/30",
                 isNotUsed && "glass border-white/10 opacity-70",
                 isRunning && "bg-blue-500/10 border-blue-500/50 shadow-[0_0_15px_rgba(59,130,246,0.3)]",
                 isCompleted && "bg-green-500/10 border-green-500/50",
@@ -82,34 +82,34 @@ export default function AgentWorkflowBar() {
                 <div className="absolute inset-0 bg-blue-500/10 animate-pulse pointer-events-none" />
               )}
               
-              <div className="flex justify-between items-start mb-3 relative z-10">
+              <div className="flex justify-between items-start mb-2 relative z-10">
                 <div className={clsx(
-                  "p-2 rounded-lg flex items-center justify-center transition-colors",
+                  "p-1.5 rounded-lg flex items-center justify-center transition-colors",
                   isNotUsed && "bg-white/10 text-white/50",
                   isRunning && "bg-blue-500/20 text-blue-400",
                   isCompleted && "bg-green-500/20 text-green-400",
                   isError && "bg-red-500/20 text-red-400"
                 )}>
-                  <Icon className="w-4 h-4" />
+                  <Icon className="w-3.5 h-3.5" />
                 </div>
                 
                 {/* Status Icons */}
                 <div className="flex items-center justify-center">
-                  {isNotUsed && <div className="w-2 h-2 rounded-full bg-white/20" />}
-                  {isRunning && <Loader2 className="w-4 h-4 text-blue-400 animate-spin" />}
-                  {isCompleted && <CheckCircle2 className="w-4 h-4 text-green-400" />}
-                  {isError && <AlertCircle className="w-4 h-4 text-red-400" />}
+                  {isNotUsed && <div className="w-1.5 h-1.5 rounded-full bg-white/20" />}
+                  {isRunning && <Loader2 className="w-3.5 h-3.5 text-blue-400 animate-spin" />}
+                  {isCompleted && <CheckCircle2 className="w-3.5 h-3.5 text-green-400" />}
+                  {isError && <AlertCircle className="w-3.5 h-3.5 text-red-400" />}
                 </div>
               </div>
               
               <div className="relative z-10">
                 <h4 className={clsx(
-                  "text-xs font-bold mb-0.5 transition-colors",
+                  "text-[10px] font-bold mb-0.5 transition-colors leading-tight line-clamp-1",
                   (isRunning || isCompleted) ? "text-white" : "text-white/70"
                 )}>
                   {agent.name}
                 </h4>
-                <p className="text-[10px] text-muted-foreground line-clamp-1 leading-tight">
+                <p className="text-[9px] text-muted-foreground line-clamp-1 leading-tight">
                   {agent.purpose}
                 </p>
               </div>
