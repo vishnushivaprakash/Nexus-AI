@@ -10,6 +10,11 @@ from motor.motor_asyncio import AsyncIOMotorClient
 from pydantic import BaseModel, Field
 from datetime import datetime
 from collections import defaultdict
+import os
+from dotenv import load_dotenv
+from groq import Groq
+
+load_dotenv()
 
 GLOBAL_DATASETS = {}
 
@@ -331,139 +336,75 @@ async def chat_endpoint(request: ChatRequest):
     columns = [col for col in df.columns]
     print(f"Detected Columns: {', '.join(columns)}")
     
-    # NLP / Heuristic Engine
-    # Find mentioned columns
-    mentioned_cols = []
-    for col in columns:
-        if col.lower().replace("_", " ") in user_msg or col.lower() in user_msg:
-            mentioned_cols.append(col)
-            
-    # Check for insight/trend questions
-    insight_keywords = ["insight", "trend", "recommendation", "summary", "overview", "analyze"]
-    is_insight_q = any(k in user_msg for k in insight_keywords)
-    
-    # Check for general terms to see if it's unrelated
-    general_data_terms = ["average", "mean", "highest", "lowest", "max", "min", "most common", "top", "count", "how many", "total", "sum", "frequent", "show", "what is"]
-    is_data_q = any(k in user_msg for k in general_data_terms) or len(mentioned_cols) > 0
-    
-    if not (is_data_q or is_insight_q):
-        print("Analysis Type: Unrelated")
-        print("Status: Success (Rejected)")
-        return {
-            "answer": "This question cannot be answered from the currently selected dataset.",
-            "code": ""
-        }
-        
-    if is_insight_q:
-        print("Analysis Type: Dataset Related Insight Question")
-        answer = f"Dataset: {dataset_name}\nTotal Rows: {len(df)}\nTotal Columns: {len(df.columns)}\n\nKey observations indicate varying distributions across numeric fields."
-        print("Status: Success")
-        return {"answer": answer, "code": ""}
-        
-    print("Analysis Type: Dataset Question")
-    
-    # Perform actual computation
+    # Use Groq to generate dynamic Pandas code
     try:
-        if "highest" in user_msg or "max" in user_msg:
-            # find numeric column
-            target_col = None
-            if mentioned_cols:
-                for c in mentioned_cols:
-                    if pd.api.types.is_numeric_dtype(df[c]):
-                        target_col = c
-                        break
-            if not target_col:
-                numeric_cols = df.select_dtypes(include=['number']).columns
-                if len(numeric_cols) > 0:
-                    target_col = numeric_cols[0]
-                    
-            if target_col:
-                max_val = df[target_col].max()
-                # find associated row name if possible
-                cat_cols = df.select_dtypes(include=['object', 'category']).columns
-                associated_name = ""
-                if len(cat_cols) > 0:
-                    row = df[df[target_col] == max_val].iloc[0]
-                    associated_name = f"\nAssociated {cat_cols[0]}: {row[cat_cols[0]]}"
-                    
-                answer = f"Highest {target_col}: {max_val}{associated_name}"
-                print("Status: Success")
-                return {"answer": answer, "code": f"df['{target_col}'].max()"}
-                
-        elif "most common" in user_msg or "frequent" in user_msg:
-            target_col = mentioned_cols[0] if mentioned_cols else df.select_dtypes(include=['object']).columns[0] if len(df.select_dtypes(include=['object']).columns) > 0 else columns[0]
-            mode_val = df[target_col].mode()[0]
-            count = (df[target_col] == mode_val).sum()
-            answer = f"Most Common {target_col}: {mode_val}\nCount: {count}"
-            print("Status: Success")
-            return {"answer": answer, "code": f"df['{target_col}'].mode()[0]"}
+        api_key = os.environ.get("GROQ_API_KEY", "")
+        if not api_key or api_key == "your_groq_api_key_here":
+            return {
+                "answer": "Groq API Key is missing. Please add your GROQ_API_KEY to the backend/.env file.",
+                "code": ""
+            }
             
-        elif "average" in user_msg or "mean" in user_msg:
-            target_col = None
-            if mentioned_cols:
-                for c in mentioned_cols:
-                    if pd.api.types.is_numeric_dtype(df[c]):
-                        target_col = c
-                        break
-            if not target_col:
-                numeric_cols = df.select_dtypes(include=['number']).columns
-                if len(numeric_cols) > 0:
-                    target_col = numeric_cols[0]
-                    
-            if target_col:
-                mean_val = df[target_col].mean()
-                answer = f"Average {target_col}: {round(mean_val, 2)}"
-                print("Status: Success")
-                return {"answer": answer, "code": f"df['{target_col}'].mean()"}
+        groq_client = Groq(api_key=api_key)
+        
+        all_schemas = {}
+        for name, data_df in GLOBAL_DATASETS.items():
+            if name != "Combined CSV":
+                all_schemas[name] = {
+                    "rows": len(data_df),
+                    "schema": data_df.dtypes.astype(str).to_dict()
+                }
+        
+        system_prompt = f"""You are an expert Data Analyst AI.
+The user has uploaded multiple pandas datasets. You have access to a dictionary named `GLOBAL_DATASETS` where keys are dataset names and values are pandas DataFrames.
+Here are the available datasets and their schemas:
+{json.dumps(all_schemas, indent=2)}
+
+The user is currently viewing the dataset '{dataset_name}'. If they ask a general question without specifying a dataset, assume they are asking about '{dataset_name}'.
+
+The user will ask a question.
+You must write a valid Python Pandas code block that extracts the exact answer they need.
+Assign the final result to a variable named `result`.
+Do NOT use `print`.
+If the question is completely unrelated to the data, assign `result = 'This question cannot be answered from the currently selected dataset.'`
+
+Examples:
+User: What is the highest selling price in cars.csv?
+Code: result = f"Highest Selling_Price: {{GLOBAL_DATASETS['cars.csv']['Selling_Price'].max()}}"
+
+User: What is the difference in total rows between data1.csv and data2.csv?
+Code: result = len(GLOBAL_DATASETS['data1.csv']) - len(GLOBAL_DATASETS['data2.csv'])
+
+Output ONLY valid python code. No markdown formatting, no backticks, no explanations. Just the raw code."""
+
+        completion = groq_client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": request.message}
+            ],
+            temperature=0,
+        )
+        
+        generated_code = completion.choices[0].message.content.strip()
+        
+        # Clean markdown if the LLM adds it anyway
+        if generated_code.startswith("```"):
+            lines = generated_code.split("\n")
+            if len(lines) > 2:
+                generated_code = "\n".join(lines[1:-1])
+            else:
+                generated_code = generated_code.replace("```python", "").replace("```", "").strip()
                 
-        elif "lowest" in user_msg or "min" in user_msg:
-            # find numeric column
-            target_col = None
-            if mentioned_cols:
-                for c in mentioned_cols:
-                    if pd.api.types.is_numeric_dtype(df[c]):
-                        target_col = c
-                        break
-            if not target_col:
-                numeric_cols = df.select_dtypes(include=['number']).columns
-                if len(numeric_cols) > 0:
-                    target_col = numeric_cols[0]
-                    
-            if target_col:
-                min_val = df[target_col].min()
-                # find associated row name if possible
-                cat_cols = df.select_dtypes(include=['object', 'category']).columns
-                associated_name = ""
-                if len(cat_cols) > 0:
-                    row = df[df[target_col] == min_val].iloc[0]
-                    associated_name = f"\nAssociated {cat_cols[0]}: {row[cat_cols[0]]}"
-                    
-                answer = f"Lowest {target_col}: {min_val}{associated_name}"
-                print("Status: Success")
-                return {"answer": answer, "code": f"df['{target_col}'].min()"}
-                
-        elif "total" in user_msg or "sum" in user_msg:
-            target_col = None
-            if mentioned_cols:
-                for c in mentioned_cols:
-                    if pd.api.types.is_numeric_dtype(df[c]):
-                        target_col = c
-                        break
-            if not target_col:
-                numeric_cols = df.select_dtypes(include=['number']).columns
-                if len(numeric_cols) > 0:
-                    target_col = numeric_cols[0]
-                    
-            if target_col:
-                sum_val = df[target_col].sum()
-                answer = f"Total {target_col}: {round(sum_val, 2)}"
-                print("Status: Success")
-                return {"answer": answer, "code": f"df['{target_col}'].sum()"}
-                
-        # Default computation fallback
-        answer = f"Dataset: {dataset_name}\nTotal Records: {len(df)}"
+        print(f"Generated Code:\n{generated_code}")
+        
+        # Execute the code against the DataFrame
+        local_vars = {"GLOBAL_DATASETS": GLOBAL_DATASETS, "pd": pd}
+        exec(generated_code, globals(), local_vars)
+        answer = local_vars.get("result", "Execution failed to produce a result.")
+        
         print("Status: Success")
-        return {"answer": answer, "code": ""}
+        return {"answer": str(answer), "code": generated_code}
         
     except Exception as e:
         print(f"Status: Failed - {str(e)}")

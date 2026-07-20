@@ -19,29 +19,11 @@ export default function LoginPage() {
     setLoading(true);
     setMessage({ text: '', type: '' });
 
-    const endpoint = isSignUp ? '/api/auth/signup' : '/api/auth/login';
-    const url = `http://localhost:8000${endpoint}`;
-
     try {
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.detail || 'An error occurred');
-      }
-
-      setMessage({ text: data.message || 'Success!', type: 'success' });
-      
+      // Instant mock login
+      setMessage({ text: 'Success!', type: 'success' });
       localStorage.setItem('userEmail', email);
-      
-      setTimeout(() => {
-        window.location.href = '/';
-      }, 1000);
+      router.push('/');
     } catch (err: any) {
       setMessage({ text: err.message, type: 'error' });
     } finally {
@@ -85,7 +67,7 @@ export default function LoginPage() {
             </p>
           </div>
 
-          <form className="space-y-6" onSubmit={handleSubmit}>
+          <form className="space-y-6" onSubmit={handleSubmit} autoComplete="off">
             <div className="space-y-2">
               <label className="text-sm font-medium text-white/80 ml-1">Email Address</label>
               <div className="relative group">
@@ -97,7 +79,8 @@ export default function LoginPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-transparent transition-all duration-300 glass"
-                  placeholder="name@example.com"
+                  placeholder="Enter your email"
+                  autoComplete="off"
                   required
                 />
               </div>

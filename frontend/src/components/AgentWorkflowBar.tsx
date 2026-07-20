@@ -32,7 +32,7 @@ export default function AgentWorkflowBar() {
   useEffect(() => {
     const runningAgentIndex = agents.findIndex(a => a.status === 'running');
     if (runningAgentIndex !== -1 && scrollRef.current) {
-      const cardWidth = 220; // Approximate width of a card + gap
+      const cardWidth = 200; // Approximate width of a card + gap
       scrollRef.current.scrollTo({
         left: runningAgentIndex * cardWidth,
         behavior: 'smooth'
@@ -41,16 +41,16 @@ export default function AgentWorkflowBar() {
   }, [agents]);
 
   return (
-    <div className="w-full border-b border-white/10 bg-black/40 backdrop-blur-md p-4 relative z-30 shadow-lg">
-      <div className="flex items-center gap-4 mb-2 px-2">
-        <BrainCircuit className="w-5 h-5 text-primary" />
-        <h3 className="text-sm font-bold text-white uppercase tracking-wider">Nexora Agent Swarm</h3>
-        <span className="text-xs text-muted-foreground ml-2 px-2 py-0.5 rounded-full border border-white/10 bg-white/5">Multi-Agent Workflow Active</span>
+    <div className="w-full border-b border-white/10 bg-black/40 backdrop-blur-md p-2 shadow-lg">
+      <div className="flex items-center gap-2 mb-1 px-2">
+        <BrainCircuit className="w-4 h-4 text-primary" />
+        <h3 className="text-xs font-bold text-white uppercase tracking-wider">Nexora Agent Swarm</h3>
+        <span className="text-[10px] text-muted-foreground ml-2 px-2 py-0.5 rounded-full border border-white/10 bg-white/5">Multi-Agent Workflow Active</span>
       </div>
       
       <div 
         ref={scrollRef}
-        className="flex gap-4 overflow-x-auto pb-4 pt-2 px-2 snap-x scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent"
+        className="flex gap-3 overflow-x-auto pb-2 pt-1 px-2 snap-x scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent"
       >
         {agents.map((agent, index) => {
           const Icon = AGENT_ICONS[agent.id] || Database;
@@ -69,7 +69,7 @@ export default function AgentWorkflowBar() {
               transition={{ delay: index * 0.05 }}
               onClick={() => setActiveAgentId(agent.id)}
               className={clsx(
-                "shrink-0 w-64 p-4 rounded-xl border cursor-pointer transition-all duration-300 snap-center relative overflow-hidden group",
+                "shrink-0 w-48 p-3 rounded-lg border cursor-pointer transition-all duration-300 snap-center relative overflow-hidden group",
                 isSelected ? "ring-2 ring-primary ring-offset-2 ring-offset-black" : "hover:border-white/30",
                 isNotUsed && "glass border-white/10 opacity-70",
                 isRunning && "bg-blue-500/10 border-blue-500/50 shadow-[0_0_15px_rgba(59,130,246,0.3)]",
@@ -90,7 +90,7 @@ export default function AgentWorkflowBar() {
                   isCompleted && "bg-green-500/20 text-green-400",
                   isError && "bg-red-500/20 text-red-400"
                 )}>
-                  <Icon className="w-5 h-5" />
+                  <Icon className="w-4 h-4" />
                 </div>
                 
                 {/* Status Icons */}
@@ -104,12 +104,12 @@ export default function AgentWorkflowBar() {
               
               <div className="relative z-10">
                 <h4 className={clsx(
-                  "text-sm font-bold mb-1 transition-colors",
+                  "text-xs font-bold mb-0.5 transition-colors",
                   (isRunning || isCompleted) ? "text-white" : "text-white/70"
                 )}>
                   {agent.name}
                 </h4>
-                <p className="text-xs text-muted-foreground line-clamp-2">
+                <p className="text-[10px] text-muted-foreground line-clamp-1 leading-tight">
                   {agent.purpose}
                 </p>
               </div>

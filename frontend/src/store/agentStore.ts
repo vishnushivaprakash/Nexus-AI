@@ -40,6 +40,13 @@ export const INITIAL_AGENTS: Agent[] = [
     details: {}
   },
   {
+    id: 'pandas',
+    name: 'Pandas Agent',
+    purpose: 'Writes and executes dynamic Python Pandas code for complex calculations.',
+    status: 'not_used',
+    details: {}
+  },
+  {
     id: 'analysis',
     name: 'Analysis Agent',
     purpose: 'Performs statistical calculations and identifies trends.',
@@ -132,16 +139,16 @@ export const useAgentStore = create<AgentStore>((set, get) => ({
     const q = query.toLowerCase();
     
     // Determine which agents to activate based on the query
-    let agentsToRun = ['data', 'analysis', 'insight', 'reasoning'];
+    let agentsToRun = ['data', 'sql', 'pandas', 'analysis', 'insight', 'reasoning'];
     
-    if (q.includes('revenue') || q.includes('top') || q.includes('region')) {
-      agentsToRun = ['data', 'sql', 'analysis', 'visualization', 'insight', 'reasoning'];
+    if (q.includes('revenue') || q.includes('top') || q.includes('region') || q.includes('how') || q.includes('what') || q.includes('popular')) {
+      agentsToRun = ['data', 'sql', 'pandas', 'analysis', 'visualization', 'insight', 'reasoning'];
     } else if (q.includes('anomal') || q.includes('spike')) {
-      agentsToRun = ['data', 'analysis', 'anomaly', 'insight', 'reasoning'];
+      agentsToRun = ['data', 'sql', 'pandas', 'analysis', 'anomaly', 'insight', 'reasoning'];
     } else if (q.includes('forecast') || q.includes('predict') || q.includes('future') || q.includes('month')) {
-      agentsToRun = ['data', 'analysis', 'predictive', 'visualization', 'insight', 'reasoning'];
+      agentsToRun = ['data', 'sql', 'pandas', 'analysis', 'predictive', 'visualization', 'insight', 'reasoning'];
     } else if (q.includes('report') || q.includes('summary')) {
-      agentsToRun = ['data', 'analysis', 'insight', 'recommendation', 'report'];
+      agentsToRun = ['data', 'sql', 'pandas', 'analysis', 'insight', 'recommendation', 'report'];
     }
     
     // Mock sequential execution

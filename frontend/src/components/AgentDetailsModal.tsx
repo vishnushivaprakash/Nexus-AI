@@ -158,6 +158,15 @@ export default function AgentDetailsModal() {
                 </section>
               )}
               
+              {agent.status === 'completed' && agent.id === 'pandas' && agent.details?.specificData?.code && (
+                <section>
+                  <h3 className="text-xs uppercase tracking-widest text-muted-foreground font-bold mb-3">Generated Pandas Code</h3>
+                  <div className="bg-black/60 p-4 rounded-xl border border-white/10 font-mono text-xs text-green-300 whitespace-pre-wrap overflow-x-auto">
+                    {agent.details.specificData.code}
+                  </div>
+                </section>
+              )}
+              
               {agent.status === 'completed' && agent.id === 'reasoning' && (
                 <section>
                   <h3 className="text-xs uppercase tracking-widest text-muted-foreground font-bold mb-3">LLM Thought Process</h3>

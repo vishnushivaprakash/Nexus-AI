@@ -35,7 +35,7 @@ const defaultUserSegments = [
   { name: 'SMB', value: 30 },
   { name: 'Individual', value: 25 },
 ];
-const COLORS = ['#8b5cf6', '#3b82f6', '#10b981', '#f59e0b', '#ec4899'];
+const COLORS = ['#9D4EDD', '#C77DFF', '#10b981', '#f59e0b', '#ec4899'];
 
 export default function InsightsCenter({ data, view = 'dashboard', onNext }: { data?: any, view?: string, onNext: () => void }) {
   if (!data) {
@@ -171,8 +171,8 @@ export default function InsightsCenter({ data, view = 'dashboard', onNext }: { d
                   <ComposedChart data={revenueData}>
                     <defs>
                       <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.5}/>
-                        <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0}/>
+                        <stop offset="5%" stopColor="#9D4EDD" stopOpacity={0.5}/>
+                        <stop offset="95%" stopColor="#9D4EDD" stopOpacity={0}/>
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" vertical={false} />
@@ -180,7 +180,7 @@ export default function InsightsCenter({ data, view = 'dashboard', onNext }: { d
                     <YAxis stroke="#ffffff50" fontSize={12} tickLine={false} axisLine={false} />
                     <Tooltip contentStyle={{ backgroundColor: 'rgba(0,0,0,0.9)', border: '1px solid rgba(139,92,246,0.3)', borderRadius: '12px' }} itemStyle={{ color: '#fff' }} />
                     <Area type="monotone" dataKey="revenue" stroke="none" fillOpacity={1} fill="url(#colorRev)" />
-                    <Line type="monotone" dataKey="revenue" stroke="#8b5cf6" strokeWidth={3} dot={{ fill: '#8b5cf6', strokeWidth: 2, r: 4 }} activeDot={{ r: 6, strokeWidth: 0, fill: '#fff' }} />
+                    <Line type="monotone" dataKey="revenue" stroke="#9D4EDD" strokeWidth={3} dot={{ fill: '#9D4EDD', strokeWidth: 2, r: 4 }} activeDot={{ r: 6, strokeWidth: 0, fill: '#fff' }} />
                   </ComposedChart>
                 ) : data?.chartTypes?.[0] === 'Line' ? (
                   <LineChart data={revenueData}>
@@ -188,7 +188,7 @@ export default function InsightsCenter({ data, view = 'dashboard', onNext }: { d
                     <XAxis dataKey="month" stroke="#ffffff50" fontSize={12} tickLine={false} axisLine={false} />
                     <YAxis stroke="#ffffff50" fontSize={12} tickLine={false} axisLine={false} />
                     <Tooltip contentStyle={{ backgroundColor: 'rgba(0,0,0,0.9)', border: '1px solid rgba(139,92,246,0.3)', borderRadius: '12px' }} itemStyle={{ color: '#fff' }} />
-                    <Line type="monotone" dataKey="revenue" stroke="#3b82f6" strokeWidth={3} dot={{ fill: '#3b82f6', strokeWidth: 2, r: 4 }} />
+                    <Line type="monotone" dataKey="revenue" stroke="#C77DFF" strokeWidth={3} dot={{ fill: '#C77DFF', strokeWidth: 2, r: 4 }} />
                   </LineChart>
                 ) : data?.chartTypes?.[0] === 'Bar' ? (
                   <BarChart data={revenueData}>
@@ -196,7 +196,7 @@ export default function InsightsCenter({ data, view = 'dashboard', onNext }: { d
                     <XAxis dataKey="month" stroke="#ffffff50" fontSize={12} tickLine={false} axisLine={false} />
                     <YAxis stroke="#ffffff50" fontSize={12} tickLine={false} axisLine={false} />
                     <Tooltip contentStyle={{ backgroundColor: 'rgba(0,0,0,0.9)', border: '1px solid rgba(139,92,246,0.3)', borderRadius: '12px' }} itemStyle={{ color: '#fff' }} />
-                    <Bar dataKey="revenue" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="revenue" fill="#9D4EDD" radius={[4, 4, 0, 0]} />
                   </BarChart>
                 ) : (
                   <ScatterChart data={revenueData}>
@@ -243,7 +243,7 @@ export default function InsightsCenter({ data, view = 'dashboard', onNext }: { d
                     <defs>
                       <linearGradient id="colorBar" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="0%" stopColor="#60a5fa" stopOpacity={1}/>
-                        <stop offset="100%" stopColor="#3b82f6" stopOpacity={0.6}/>
+                        <stop offset="100%" stopColor="#C77DFF" stopOpacity={0.6}/>
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" vertical={false} />
@@ -268,7 +268,7 @@ export default function InsightsCenter({ data, view = 'dashboard', onNext }: { d
                       <YAxis dataKey="value" stroke="#ffffff50" fontSize={12} tickLine={false} axisLine={false} />
                       <ZAxis range={[300, 300]} />
                       <Tooltip contentStyle={{ backgroundColor: 'rgba(0,0,0,0.9)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px' }} itemStyle={{ color: '#fff' }} cursor={{ strokeDasharray: '3 3' }} />
-                      <Scatter name="Segment" dataKey="value" fill="#8b5cf6" />
+                      <Scatter name="Segment" dataKey="value" fill="#9D4EDD" />
                     </ScatterChart>
                   ) : data?.chartTypes?.[2] === 'Bar' ? (
                     <BarChart data={userSegments} layout="vertical">
@@ -310,19 +310,15 @@ export default function InsightsCenter({ data, view = 'dashboard', onNext }: { d
         </section>
         )}
 
-        {/* 4. Anomaly Detection Center */}
+        {/* 4. Dataset Health Report */}
         {(view === 'dashboard' || view === 'data-quality') && (
         <section>
-          <SectionHeader title="4. Anomaly Detection Center" subtitle="Highlighting unusual patterns requiring attention." color="red-500" />
-          <div className="space-y-6">
-            <AnomalyCard 
-              type={dynamicText.anomalies.type}
-              actual={dynamicText.anomalies.actual} expected={dynamicText.anomalies.expected}
-              severity={dynamicText.anomalies.severity} confidence={dynamicText.anomalies.confidence}
-              explanation={dynamicText.anomalies.explanation}
-              investigation={dynamicText.anomalies.investigation}
-            />
-          </div>
+          <SectionHeader title="4. Dataset Health Report" subtitle="A plain-English overview of your dataset's quality and reliability." color={dynamicText.anomalies?.type === "No Anomalies" ? "green-500" : "yellow-500"} />
+          
+          <DatasetHealthReport 
+            anomalies={dynamicText.anomalies} 
+            totalRows={totalRows} 
+          />
         </section>
         )}
 
@@ -353,19 +349,17 @@ export default function InsightsCenter({ data, view = 'dashboard', onNext }: { d
         </section>
         )}
 
-        {/* 6. Forecasting & Predictions */}
+        {/* 6. Business Forecast Report */}
         {(view === 'dashboard' || view === 'forecasting') && (
         <section>
-          <SectionHeader title="6. Forecasting & Predictions" subtitle="Future business expectations based on historical data." color="indigo-500" />
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <ForecastCard 
-              title="Metric Prediction"
-              value={dynamicText.forecasts[0]}
-              confidence={91}
-              explanation={dynamicText.forecasts[1]}
-              recommendation="Adjust strategy according to predicted values."
-            />
-          </div>
+          <SectionHeader title="6. Business Forecast Report" subtitle="Future business expectations based on historical data." color="indigo-500" />
+          <BusinessForecastReport 
+            metricName="Sales Revenue"
+            currentValue="$45,200"
+            predictedValue="$48,800"
+            changePct={8}
+            isGrowth={true}
+          />
         </section>
         )}
 
@@ -517,48 +511,135 @@ function ChartCard({ title, observation, interpretation, children, hasData = tru
   );
 }
 
-function AnomalyCard({ type, actual, expected, severity, confidence, explanation, investigation }: any) {
+function DatasetHealthReport({ anomalies, totalRows }: any) {
+  const isHealthy = anomalies?.type === "No Anomalies" || !anomalies;
+  
   return (
-    <div className="glass p-8 rounded-2xl border border-red-500/30 bg-red-500/5 relative overflow-hidden flex flex-col lg:flex-row gap-8 items-start">
-      <div className="w-16 h-16 rounded-full bg-red-500/20 flex items-center justify-center shrink-0 border border-red-500/40 shadow-[0_0_20px_rgba(239,68,68,0.3)] mt-2">
-        <ShieldAlert className="w-8 h-8 text-red-500 animate-pulse" />
-      </div>
-      <div className="flex-1 w-full">
-        <div className="flex flex-col md:flex-row md:justify-between items-start md:items-center mb-6 gap-4">
-          <div>
-            <h4 className="font-bold text-2xl text-white mb-2">{type}</h4>
-            <div className="flex gap-3">
-              <span className="bg-red-500/20 text-red-400 text-xs font-bold px-2 py-1 rounded uppercase tracking-widest">Severity: {severity}</span>
-              <span className="bg-white/10 text-white/80 text-xs font-bold px-2 py-1 rounded uppercase tracking-widest">Confidence: {confidence}%</span>
-            </div>
+    <div className="glass p-8 rounded-2xl border border-white/10 relative overflow-hidden bg-black/40">
+      
+      {/* Header Section */}
+      <div className={clsx(
+        "flex flex-col md:flex-row justify-between items-start md:items-center p-6 rounded-xl mb-8 border",
+        isHealthy ? "bg-green-500/10 border-green-500/30" : "bg-yellow-500/10 border-yellow-500/30"
+      )}>
+        <div className="flex items-center gap-4 mb-4 md:mb-0">
+          <div className={clsx(
+            "w-14 h-14 rounded-full flex items-center justify-center shrink-0 border",
+            isHealthy ? "bg-green-500/20 border-green-500/40 text-green-400" : "bg-yellow-500/20 border-yellow-500/40 text-yellow-400"
+          )}>
+            {isHealthy ? <CheckCircle2 className="w-8 h-8" /> : <AlertTriangle className="w-8 h-8 animate-pulse" />}
           </div>
-          <div className="flex gap-6 p-4 glass rounded-xl border border-white/10">
-            <div>
-              <span className="text-xs text-muted-foreground uppercase block mb-1">Actual Value</span>
-              <span className="text-xl font-bold text-red-400">{actual}</span>
-            </div>
-            <div className="w-px bg-white/10" />
-            <div>
-              <span className="text-xs text-muted-foreground uppercase block mb-1">Expected Value</span>
-              <span className="text-xl font-bold text-white">{expected}</span>
-            </div>
+          <div>
+            <h4 className="text-sm uppercase text-white/50 tracking-widest font-bold mb-1">Dataset Status</h4>
+            <span className={clsx("text-3xl font-bold", isHealthy ? "text-green-400" : "text-yellow-400")}>
+              {isHealthy ? "Healthy" : "Warning"}
+            </span>
           </div>
         </div>
         
-        <div className="space-y-4">
+        <div className="flex gap-8">
           <div>
-            <h5 className="text-xs uppercase text-white/50 font-bold mb-1">AI Explanation</h5>
-            <p className="text-sm text-white/90 leading-relaxed">{explanation}</p>
+            <span className="text-xs uppercase text-white/50 font-bold block mb-1">Records Analyzed</span>
+            <span className="text-2xl font-bold text-white">{typeof totalRows === 'number' ? totalRows.toLocaleString() : totalRows}</span>
           </div>
-          <div className="p-4 bg-red-500/10 rounded-xl border border-red-500/20 flex items-start gap-3">
-            <Target className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
-            <div>
-              <h5 className="text-xs uppercase text-red-400 font-bold mb-1">Recommended Investigation</h5>
-              <p className="text-sm text-white/90">{investigation}</p>
+          <div className="w-px bg-white/10" />
+          <div>
+            <span className="text-xs uppercase text-white/50 font-bold block mb-1">Anomalies Found</span>
+            <span className="text-2xl font-bold text-white">{isHealthy ? "0" : "1"}</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Left Column: What Was Checked */}
+        <div className="lg:col-span-1">
+          <h4 className="text-sm font-bold text-white uppercase tracking-wider mb-4 border-b border-white/10 pb-2">What Was Checked</h4>
+          <ul className="space-y-3">
+            {[
+              "Revenue Patterns", 
+              "Sales Trends", 
+              "Customer Behaviour", 
+              "Missing Values", 
+              "Duplicate Records", 
+              "Data Quality Issues"
+            ].map((check, i) => (
+              <li key={i} className="flex items-center gap-3 text-sm text-white/80">
+                {isHealthy || i !== 0 ? (
+                  <CheckCircle2 className="w-4 h-4 text-green-400 shrink-0" />
+                ) : (
+                  <AlertTriangle className="w-4 h-4 text-yellow-400 shrink-0" />
+                )}
+                {check}
+              </li>
+            ))}
+          </ul>
+        </div>
+        
+        {/* Right Column: AI Summary & Business Impact */}
+        <div className="lg:col-span-2 space-y-6">
+          <div>
+            <h4 className="text-sm font-bold text-white uppercase tracking-wider mb-2 flex items-center gap-2"><Sparkles className="w-4 h-4 text-primary" /> AI Summary</h4>
+            <p className="text-white/80 leading-relaxed text-sm p-4 bg-white/5 rounded-xl border border-white/5">
+              {isHealthy 
+                ? "No unusual patterns were detected in the dataset. Revenue, customer behaviour, and other key metrics are within expected ranges."
+                : `We found unusual activity regarding ${anomalies.type}. ${anomalies.explanation}`
+              }
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="p-4 bg-blue-500/10 rounded-xl border border-blue-500/20">
+              <h4 className="text-xs text-blue-400 font-bold uppercase tracking-wider mb-2 flex items-center gap-2"><Target className="w-4 h-4" /> Business Impact</h4>
+              <p className="text-sm text-white/90">
+                {isHealthy 
+                  ? "The dataset appears reliable for analysis, forecasting, and reporting."
+                  : `This variance affects our baseline expectations and may impact upcoming forecasts.`
+                }
+              </p>
+            </div>
+            <div className="p-4 bg-primary/10 rounded-xl border border-primary/20">
+              <h4 className="text-xs text-primary font-bold uppercase tracking-wider mb-2 flex items-center gap-2"><Lightbulb className="w-4 h-4" /> Recommendation</h4>
+              <p className="text-sm text-white/90">
+                {isHealthy 
+                  ? "No action required. Continue monitoring future data."
+                  : anomalies.investigation || "Review the affected records with your business team to determine the root cause."
+                }
+              </p>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Anomalies Table (Only if unhealthy) */}
+      {!isHealthy && (
+        <div className="mt-8 pt-8 border-t border-white/10">
+          <h4 className="text-sm font-bold text-white uppercase tracking-wider mb-4">Detailed Variance</h4>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm text-white/80">
+              <thead className="text-xs uppercase bg-white/5 text-white/50 border-b border-white/10">
+                <tr>
+                  <th className="px-4 py-3 font-bold">Anomaly Type</th>
+                  <th className="px-4 py-3 font-bold">Expected</th>
+                  <th className="px-4 py-3 font-bold">Actual</th>
+                  <th className="px-4 py-3 font-bold">Difference</th>
+                  <th className="px-4 py-3 font-bold">Severity</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/5">
+                <tr className="hover:bg-white/5 transition-colors">
+                  <td className="px-4 py-4 font-bold text-white">{anomalies.type}</td>
+                  <td className="px-4 py-4">{anomalies.expected}</td>
+                  <td className="px-4 py-4 font-bold text-yellow-400">{anomalies.actual}</td>
+                  <td className="px-4 py-4 text-red-400 font-medium">Significant</td>
+                  <td className="px-4 py-4">
+                    <span className="bg-yellow-500/20 text-yellow-400 px-2 py-1 rounded-md text-xs font-bold uppercase">{anomalies.severity}</span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -577,27 +658,90 @@ function ReasoningStep({ label, text, color, isFinal }: any) {
   );
 }
 
-function ForecastCard({ title, value, confidence, explanation, recommendation }: any) {
+function BusinessForecastReport({ metricName, currentValue, predictedValue, changePct, isGrowth }: any) {
   return (
-    <div className="glass p-8 rounded-2xl border border-indigo-500/20 hover:border-indigo-500/40 transition-colors">
-      <div className="flex justify-between items-start mb-6">
-        <div>
-          <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-2">{title}</h4>
-          <p className="text-3xl font-bold text-white">{value}</p>
-        </div>
-        <div className="text-right">
-          <span className="text-xs text-indigo-300 uppercase tracking-widest block mb-1">Confidence</span>
-          <span className="text-xl font-bold text-indigo-400">{confidence}%</span>
+    <div className="glass p-8 rounded-2xl border border-white/10 relative overflow-hidden bg-black/40">
+      
+      {/* Header Section */}
+      <div className={clsx(
+        "flex flex-col md:flex-row justify-between items-start md:items-center p-6 rounded-xl mb-8 border",
+        isGrowth ? "bg-green-500/10 border-green-500/30" : "bg-yellow-500/10 border-yellow-500/30"
+      )}>
+        <div className="flex items-center gap-4 mb-4 md:mb-0">
+          <div className={clsx(
+            "w-14 h-14 rounded-full flex items-center justify-center shrink-0 border",
+            isGrowth ? "bg-green-500/20 border-green-500/40 text-green-400" : "bg-yellow-500/20 border-yellow-500/40 text-yellow-400"
+          )}>
+            {isGrowth ? <TrendingUp className="w-8 h-8" /> : <TrendingDown className="w-8 h-8" />}
+          </div>
+          <div>
+            <h4 className="text-sm uppercase text-white/50 tracking-widest font-bold mb-1">Forecast Status</h4>
+            <span className={clsx("text-3xl font-bold", isGrowth ? "text-green-400" : "text-yellow-400")}>
+              {isGrowth ? "Growth Expected" : "Decline Expected"}
+            </span>
+          </div>
         </div>
       </div>
-      <div className="space-y-4">
-        <div>
-          <h5 className="text-[10px] uppercase text-white/50 font-bold mb-1">AI Explanation</h5>
-          <p className="text-sm text-white/80 leading-relaxed">{explanation}</p>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Left Column: Metrics Block */}
+        <div className="lg:col-span-1 space-y-6">
+          <div>
+            <h4 className="text-sm font-bold text-white uppercase tracking-wider mb-2 border-b border-white/10 pb-2">Forecast Summary</h4>
+            <p className="text-white/80 text-sm mt-4">
+              {metricName} is expected to {isGrowth ? "increase" : "decrease"} by {changePct}% over the next period.
+            </p>
+          </div>
+          <div className="space-y-4">
+            <div className="p-4 bg-white/5 rounded-xl border border-white/10 flex justify-between items-center">
+              <span className="text-xs uppercase text-white/50 font-bold block">Current Value</span>
+              <span className="text-xl font-bold text-white">{currentValue}</span>
+            </div>
+            <div className="p-4 bg-white/5 rounded-xl border border-white/10 flex justify-between items-center">
+              <span className="text-xs uppercase text-white/50 font-bold block">Predicted Value</span>
+              <span className="text-xl font-bold text-white">{predictedValue}</span>
+            </div>
+            <div className="p-4 bg-white/5 rounded-xl border border-white/10 flex justify-between items-center">
+              <span className="text-xs uppercase text-white/50 font-bold block">Expected Change</span>
+              <span className={clsx("text-xl font-bold", isGrowth ? "text-green-400" : "text-yellow-400")}>
+                {isGrowth ? "+" : "-"}{changePct}%
+              </span>
+            </div>
+          </div>
         </div>
-        <div className="p-3 bg-indigo-500/10 border border-indigo-500/20 rounded-lg">
-          <h5 className="text-[10px] uppercase text-indigo-400 font-bold mb-1 flex items-center gap-1"><Lightbulb className="w-3 h-3"/> Business Recommendation</h5>
-          <p className="text-sm text-white font-medium">{recommendation}</p>
+        
+        {/* Right Column: AI Summary & Business Impact */}
+        <div className="lg:col-span-2 space-y-6">
+          <div>
+            <h4 className="text-sm font-bold text-white uppercase tracking-wider mb-2 flex items-center gap-2"><Sparkles className="w-4 h-4 text-primary" /> AI Summary</h4>
+            <p className="text-white/80 leading-relaxed text-sm p-4 bg-white/5 rounded-xl border border-white/5">
+              {isGrowth 
+                ? "The data indicates a steady upward trend and continued growth is expected."
+                : "The data indicates a potential decline in performance during the forecast period."
+              }
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="p-4 bg-blue-500/10 rounded-xl border border-blue-500/20">
+              <h4 className="text-xs text-blue-400 font-bold uppercase tracking-wider mb-2 flex items-center gap-2"><Target className="w-4 h-4" /> Business Impact</h4>
+              <p className="text-sm text-white/90">
+                {isGrowth 
+                  ? "This trend may create new opportunities for customer acquisition and revenue growth."
+                  : "This could impact revenue, customer engagement, or operational efficiency."
+                }
+              </p>
+            </div>
+            <div className="p-4 bg-primary/10 rounded-xl border border-primary/20">
+              <h4 className="text-xs text-primary font-bold uppercase tracking-wider mb-2 flex items-center gap-2"><Lightbulb className="w-4 h-4" /> Recommendation</h4>
+              <p className="text-sm text-white/90">
+                {isGrowth 
+                  ? "Prepare resources and marketing strategies to support the expected increase."
+                  : "Investigate contributing factors and implement corrective actions."
+                }
+              </p>
+            </div>
+          </div>
         </div>
       </div>
     </div>
